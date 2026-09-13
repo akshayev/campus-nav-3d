@@ -30,7 +30,7 @@
 
 - **OS:** Mixed across team members (not uniform) → Git-based workflow is mandatory, avoid OS-specific paths/tools where possible.
 - **Primary dev machine (Akshay/Hashir):** mid-range, dedicated GPU, decent RAM — sufficient for Unity + Blender.
-- **Unity:** not installed yet. **Version locked: Unity 2022 LTS** (chosen over Unity 6 for maximum tutorial/community support, important given the team's beginner status). Need Unity Hub + WebGL Build Support + Android Build Support modules.
+- **Unity:** installed. **Version locked: Unity 6 LTS (6000.6.0f1)** — switched from the originally planned 2022 LTS because only 6000.6.0f1 was available/installable on the primary dev machine; Unity 6 tutorial/community support is now mature enough to not be a significant beginner-experience regression. Need Unity Hub + WebGL Build Support + Android Build Support modules.
 - **Blender:** not installed yet (assumed, given Theertha/Anandhu are beginners).
 - **Version control:** GitHub. **Repo created: [github.com/akshayev/campus-nav-3d](https://github.com/akshayev/campus-nav-3d)** (assumed public — confirm/change in repo settings if private is preferred).
   - `.gitignore`, `.gitattributes` (Git LFS config), and `README.md` drafted — see `/repo-setup` deliverables.
@@ -108,6 +108,6 @@ No outstanding revision action — both documents are current as of this update.
 
 ## 8. Repository & Tooling Setup
 - **Repo:** github.com/akshayev/campus-nav-3d (assumed public)
-- **Unity version:** 2022 LTS
+- **Unity version:** 6 LTS (6000.6.0f1)
 - **Planned repo structure:** `/docs` (documents), `/UnityProject` (Unity project), `/reference` (photos, floor sketches)
 - **Week 1 issues drafted:** Unity scaffold, Blender onboarding, Firebase project creation, exterior reference/measurement pass, guaranteed-floor interior sketch, exterior blockout, joystick prototype, avatar selection screen, avatar/animation sourcing, NavMesh bake — see `WEEK1_ISSUES.md` for full text to paste into GitHub Issues.
