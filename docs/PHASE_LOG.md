@@ -31,4 +31,48 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 1.1 — Git Commit & Push (Issue #1 follow-up)
+**Date:** 2026-09-14
+**Status:** ✅ Complete — pushed to `main` (`9ad630f..6aae9ea`)
+
+**Corrected before push:**
+- Root `.gitignore` lacked effective Unity ignore rules — `Library/` (336 MB), `Temp/`, `Logs/`, `Builds/`, `UserSettings/` would have been staged. Fixed; verified only `Assets/`, `Packages/`, `ProjectSettings/` are tracked.
+- Removed a broken leftover `.git` directory inside `UnityProject/` (debris from an earlier stalled Unity Hub attempt).
+
+**Now on `main`:** `.gitignore` (corrected), `CLAUDE.md`, `docs/PHASE_LOG.md`, `docs/PROJECT_KNOWLEDGE_BASE.md`, `UnityProject/Assets/`, `Packages/manifest.json` + lock file, `UnityProject/ProjectSettings/`.
+
+**Recommended follow-up (not blocking):** have a second team member do a fresh clone to confirm the corrected `.gitignore` produces a clean working checkout.
+
+**Next planned task:** Issue #7 (Virtual Joystick prototype).
+
+---
+
+## Phase 2 — Input Layer: Joystick + WASD Fallback + Movement (Issue #7)
+**Date:** 2026-09-14
+**Status:** ✅ Built and functionally verified — **not yet committed/pushed**
+
+**Built:**
+- `VirtualJoystick.cs` — on-screen touch joystick (Canvas/EventSystem, background + handle), drag → normalized direction vector
+- `PlayerMovementInput.cs` — shared input source so joystick and WASD/arrow-key fallback both feed the same movement pipeline (per NFR 3.2.2 and our explicit decision to support both)
+- `AvatarMovementController.cs` — consumes the shared input, moves the placeholder capsule
+- `Exterior.unity` — added Main Camera (static, no follow yet) and Directional Light (scene no longer renders black); placeholder capsule avatar in place of the real Mixamo model
+
+**Verification performed:**
+- Simulated joystick drag traced through the full chain: direction vector correctly clamped to magnitude 1, movement speed and gravity both confirmed correct (avatar walked off the unbounded 100×100 plane and fell — expected, since NavMesh/collision (FR-3) is intentionally not implemented yet, pending Issue #6 geometry)
+- No compile or runtime errors across the play-mode test session
+- **Fresh WebGL rebuild after adding the input layer — succeeded, 0 errors**
+
+**Known gaps (not blockers, tracked for later issues):**
+- Camera has no follow behavior yet (`CampusCameraController` per SDD 5.2) — was paused awaiting a scope call, decided below.
+- No NavMesh, no POI system, no Firebase integration, no real avatar model, no Blender assets yet.
+- `AvatarSelect` and `Floor1` scenes remain empty placeholders.
+- Android build untried — WebGL is the only verified target so far (consistent with WebGL-primary decision).
+
+**Not yet done:**
+- Commit and push today's input-layer work.
+
+**Next planned task:** Commit/push Phase 2, then `CampusCameraController` (camera-follow), run in parallel with kicking off Issue #6 (exterior Blender blockout) for Theertha/Anandhu.
+
+---
+
 <!-- Add new entries above this line, newest first. -->
