@@ -49,7 +49,7 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ## Phase 2 — Input Layer: Joystick + WASD Fallback + Movement (Issue #7)
 **Date:** 2026-09-14
-**Status:** ✅ Built and functionally verified — **not yet committed/pushed**
+**Status:** ✅ Complete — pushed to `main` (`6aae9ea..6034336`)
 
 **Built:**
 - `VirtualJoystick.cs` — on-screen touch joystick (Canvas/EventSystem, background + handle), drag → normalized direction vector
@@ -69,9 +69,37 @@ Running record of every implementation session with Claude Code. Newest entry on
 - Android build untried — WebGL is the only verified target so far (consistent with WebGL-primary decision).
 
 **Not yet done:**
-- Commit and push today's input-layer work.
+- ~~Commit and push today's input-layer work.~~ Done — see Phase 3.
 
-**Next planned task:** Commit/push Phase 2, then `CampusCameraController` (camera-follow), run in parallel with kicking off Issue #6 (exterior Blender blockout) for Theertha/Anandhu.
+**Next planned task:** `CampusCameraController` (camera-follow) — see Phase 3.
+
+---
+
+## Phase 3 — CampusCameraController: Smooth Third-Person Follow (SDD 5.2)
+**Date:** 2026-09-14
+**Status:** ✅ Complete and functionally verified — pending commit/push
+
+**Built:**
+- `CampusCameraController.cs` — attached to Main Camera; follows `AvatarPlaceholder` using `Vector3.SmoothDamp` (eased position tracking, not rigid-lock) plus a raycast-based collision check that pulls the camera in front of any obstacle between it and the target (currently only the ground plane; will matter more once building geometry exists)
+- Added a `Player` layer and moved `AvatarPlaceholder` onto it, so the camera's own collision raycast can never mistake the avatar's body for an obstacle
+- Bug fix in `AvatarMovementController.cs`: gravity accumulation had no terminal velocity cap. Found this via testing (see below) — added `maxFallSpeed` (20 units/sec) as a general robustness fix, independent of the specific incident that surfaced it.
+
+**Verification performed:**
+- Confirmed smooth-follow is real (not rigid-lock): mid-movement, camera position measurably lagged the ideal `target + offset` position by ~0.23 units rather than matching it exactly.
+- Confirmed collision avoidance: forced the desired camera position through the ground plane (offset pointed straight down) — corrected camera Y landed just above the surface (~0.30) instead of clipping through to the uncorrected ~-8.92.
+- Fresh WebGL rebuild after the change — succeeded, 0 errors.
+
+**Anomaly encountered and resolved:**
+- During an early test (holding simulated joystick input across several real-world seconds between tool calls, combined with the then-uncapped gravity), `GroundPlane`'s transform drifted from `(0,0,0)` to `(1.5,-3.4,0)` and did **not** revert when Play mode was stopped — unusual, since Play-mode-only changes normally discard automatically. Leading theory: PhysX numerical instability from an extreme, uncapped fall velocity (the avatar's fall speed was unbounded and reached an extreme value during that test) corrupting unrelated collider state; not fully root-caused. Manually reset `GroundPlane` to `(0,0,0)`, added the terminal velocity cap, and re-ran a bounded version of the same test — this time everything reverted correctly on Stop, as expected. Flagging in case this resurfaces; if it does, it's a strong signal to look at physics step size / substepping settings rather than gameplay script logic.
+
+**Known gaps (not blockers):**
+- Camera has no obstacle-avoidance test against real building geometry yet — only the ground plane exists, so the collision check is unexercised against walls/corners until Issue #6 blockout geometry lands.
+- Camera doesn't yet rotate to track the avatar's heading — it holds a fixed world-space offset behind/above the origin area, which is simpler and avoids swinging wildly if the avatar turns quickly. Revisit if playtesting says it needs to.
+
+**Not yet done:**
+- Commit and push Phase 3.
+
+**Next planned task:** Issue #6 (exterior Blender blockout) — needed before the collision-avoidance logic can be meaningfully tested against real geometry, and before NavMesh/movement boundaries can be added.
 
 ---
 

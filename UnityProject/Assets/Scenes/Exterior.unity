@@ -410,7 +410,7 @@ GameObject:
   - component: {fileID: 742483461}
   - component: {fileID: 742483460}
   - component: {fileID: 742483464}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: AvatarPlaceholder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -528,6 +528,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AvatarMovementController
   moveSpeed: 4
   gravity: -9.81
+  maxFallSpeed: 20
 --- !u!1 &953536819
 GameObject:
   m_ObjectHideFlags: 0
@@ -779,6 +780,7 @@ GameObject:
   - component: {fileID: 1844642175}
   - component: {fileID: 1844642174}
   - component: {fileID: 1844642173}
+  - component: {fileID: 1844642176}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -860,6 +862,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1844642176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1844642172}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f816bb31739bb870c880ba5a4bdcca34, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CampusCameraController
+  target: {fileID: 742483463}
+  offset: {x: 0, y: 5, z: -8}
+  followSmoothTime: 0.15
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 1
+  collisionBuffer: 0.3
 --- !u!1 &1997282601
 GameObject:
   m_ObjectHideFlags: 0

@@ -17,6 +17,11 @@ public class AvatarMovementController : MonoBehaviour
     [Tooltip("How strongly gravity pulls the avatar down. Keeps it stuck to the ground plane.")]
     [SerializeField] private float gravity = -9.81f;
 
+    [Tooltip("Fastest the avatar is allowed to fall, in units per second. Without this cap, " +
+        "falling off an edge (there's no boundary/NavMesh yet) lets fall speed grow forever, " +
+        "which can make a single big physics step behave unpredictably.")]
+    [SerializeField] private float maxFallSpeed = 20f;
+
     private CharacterController controller;
     private float verticalVelocity;
 
@@ -47,6 +52,7 @@ public class AvatarMovementController : MonoBehaviour
         else
         {
             verticalVelocity += gravity * Time.deltaTime;
+            verticalVelocity = Mathf.Max(verticalVelocity, -maxFallSpeed);
         }
 
         Vector3 velocity = moveDirection * moveSpeed;
