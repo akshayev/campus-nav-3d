@@ -4,6 +4,10 @@ using UnityEngine;
 // This script doesn't know or care if that direction came from the joystick or the keyboard —
 // that's the whole point of having a shared input source.
 //
+// Movement is CAMERA-RELATIVE: pushing "up" on the joystick (or W) moves the avatar in the
+// direction the camera is looking, not along a fixed world axis. That's what players expect
+// from a third-person game, and it keeps controls intuitive if the camera ever rotates.
+//
 // Requires a CharacterController component (Unity adds one automatically if it's missing,
 // because of the [RequireComponent] line below). CharacterController is Unity's standard
 // "move a capsule around the world without fighting physics" component — very common in
@@ -22,12 +26,23 @@ public class AvatarMovementController : MonoBehaviour
         "which can make a single big physics step behave unpredictably.")]
     [SerializeField] private float maxFallSpeed = 20f;
 
+    [Tooltip("The camera whose facing direction defines 'forward'. Leave empty to use the scene's Main Camera.")]
+    [SerializeField] private Transform cameraTransform;
+
+    // Horizontal speed this frame, in units per second (0 when standing still).
+    // A later phase will feed this into the Animator to blend idle → walk → run.
+    public float CurrentSpeed { get; private set; }
+
     private CharacterController controller;
     private float verticalVelocity;
 
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        if (cameraTransform == null)
+        {
+            cameraTransform = Camera.main.transform;
+        }
     }
 
     private void Update()
@@ -36,12 +51,7 @@ public class AvatarMovementController : MonoBehaviour
             ? PlayerMovementInput.Instance.MoveDirection
             : Vector2.zero;
 
-        // Screen-space X/Y from the input becomes world-space X/Z (ground plane movement).
-        Vector3 moveDirection = new Vector3(input.x, 0f, input.y);
-        if (moveDirection.sqrMagnitude > 1f)
-        {
-            moveDirection.Normalize();
-        }
+        Vector3 moveDirection = GetCameraRelativeDirection(input);
 
         // CharacterController needs us to apply gravity ourselves. When grounded we push
         // gently downward (not zero) so isGrounded stays true instead of flickering.
@@ -56,6 +66,7 @@ public class AvatarMovementController : MonoBehaviour
         }
 
         Vector3 velocity = moveDirection * moveSpeed;
+        CurrentSpeed = velocity.magnitude;
         velocity.y = verticalVelocity;
         controller.Move(velocity * Time.deltaTime);
 
@@ -65,5 +76,21 @@ public class AvatarMovementController : MonoBehaviour
         {
             transform.forward = moveDirection;
         }
+    }
+
+    // Turns a 2D stick direction (x = right, y = forward) into a flat 3D direction based on
+    // where the camera is looking. We ignore the camera's up/down tilt (y = 0) so looking
+    // down at the avatar doesn't make "forward" point into the ground.
+    private Vector3 GetCameraRelativeDirection(Vector2 input)
+    {
+        Vector3 forward = cameraTransform.forward;
+        Vector3 right = cameraTransform.right;
+        forward.y = 0f;
+        right.y = 0f;
+        forward.Normalize();
+        right.Normalize();
+
+        Vector3 direction = forward * input.y + right * input.x;
+        return Vector3.ClampMagnitude(direction, 1f);
     }
 }

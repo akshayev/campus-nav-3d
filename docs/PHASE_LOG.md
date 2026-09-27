@@ -103,4 +103,30 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 4 — Movement/Input/Camera Spec Alignment
+**Date:** 2026-09-27
+**Status:** ✅ Complete and build-verified — not yet committed
+
+**Built / changed:**
+- `Exterior.unity`: avatar capsule renamed `AvatarPlaceholder` → `Player` (still on the `Player` layer, at (0,1,0), with CharacterController).
+- `AvatarMovementController.cs`: movement is now **camera-relative** (flattened camera forward/right), uses `Camera.main` unless a camera is assigned; new public `CurrentSpeed` property (horizontal units/sec) for the future Animator. No animation code.
+- `VirtualJoystick.cs`: public output renamed `InputDirection` → `Direction`.
+- `PlayerMovementInput.cs`: joystick + keyboard now converge in one method, `ReadMoveInput()` (joystick wins when active, else WASD/arrows).
+- New `Assets/Editor/BuildScript.cs` with `BuildScript.BuildWebGL` — the batch-mode command in CLAUDE.md now actually works. Output: `UnityProject/Builds/WebGL/` (gitignored).
+
+**Deliberate deviations from the task spec:**
+- Kept `PlayerMovementInput` as the single input convergence point instead of having `AvatarMovementController` read the joystick directly — same outcome, no scene rewiring.
+- Kept camera collision handling from Phase 3 even though the spec said "no camera collision handling". Remove if the team prefers.
+
+**Verification performed:**
+- Batch-mode WebGL build: `Build Finished, Result: Success`, 0 errors, exit code 0.
+
+**Open issue — needs a team decision:**
+- Commit `0773af1` saved the project with **Unity 6000.3.24f1**, but CLAUDE.md specifies 6000.6.0f1. Building with 6000.6.0f1 upgraded `ProjectVersion.txt` and `packages-lock.json`. Everyone must agree on one editor version before committing.
+- Generated IDE files (`*.csproj`, `*.slnx`) are tracked in git since `0773af1`; they should be gitignored.
+
+**Next planned task:** Issue #6 (exterior Blender blockout) — real geometry is needed to test movement boundaries/NavMesh and camera collision.
+
+---
+
 <!-- Add new entries above this line, newest first. -->

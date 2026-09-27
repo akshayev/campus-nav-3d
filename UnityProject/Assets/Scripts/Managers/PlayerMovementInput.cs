@@ -36,18 +36,22 @@ public class PlayerMovementInput : MonoBehaviour
 
     private void Update()
     {
+        MoveDirection = ReadMoveInput();
+    }
+
+    // The ONE place where touch, mouse (the joystick handles both) and keyboard converge.
+    // Add a new input device later (e.g. a gamepad) by changing only this method.
+    private Vector2 ReadMoveInput()
+    {
+        Vector2 joystickDirection = joystick != null ? joystick.Direction : Vector2.zero;
+        if (joystickDirection.sqrMagnitude >= JoystickActiveThreshold * JoystickActiveThreshold)
+        {
+            return joystickDirection;
+        }
+
         Vector2 keyboardDirection = new Vector2(
             Input.GetAxisRaw("Horizontal"),
             Input.GetAxisRaw("Vertical"));
-        if (keyboardDirection.sqrMagnitude > 1f)
-        {
-            keyboardDirection.Normalize();
-        }
-
-        Vector2 joystickDirection = joystick != null ? joystick.InputDirection : Vector2.zero;
-
-        MoveDirection = joystickDirection.sqrMagnitude >= (JoystickActiveThreshold * JoystickActiveThreshold)
-            ? joystickDirection
-            : keyboardDirection;
+        return Vector2.ClampMagnitude(keyboardDirection, 1f);
     }
 }
