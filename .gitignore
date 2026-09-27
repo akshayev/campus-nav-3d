@@ -37,6 +37,10 @@ Thumbs.db
 *.blend1
 *.blend2
 
+# Mixamo character models: too large for the free Git LFS quota, shared outside git
+# (see docs/PROJECT_KNOWLEDGE_BASE.md Section 4). Their .meta files ARE committed.
+UnityProject/Assets/Models/Characters/*.fbx
+
 # Testing
 coverage/
 

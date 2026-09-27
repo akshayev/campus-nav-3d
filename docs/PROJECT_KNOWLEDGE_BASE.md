@@ -73,6 +73,11 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 - **Backend:** Firebase Firestore (not Realtime DB) — see SDD for schema (`buildings` collection).
 - **Deployment priority:** **WebGL is primary** (easier live demo). Android APK is secondary/best-effort.
 - **Budget:** **zero** — free assets and free-tier services only (Firebase Spark plan, free Unity Asset Store items, free Mixamo).
+- **Character models are NOT in git** (decided 2026-09-27). The Mixamo avatars `men.fbx` (Ch08, 87 MB) and `women.fbx` (Ch26, 56 MB) together would eat most of GitHub's free Git LFS allowance (1 GB storage / 1 GB bandwidth per month) on the first few clones. So:
+  - The `.fbx` files in `UnityProject/Assets/Models/Characters/` are gitignored and shared via a team shared drive instead.
+  - Their `.meta` files **are** committed — they hold the Humanoid rig settings and the asset GUIDs that prefabs reference, so dropping the `.fbx` into that folder reconnects everything automatically.
+  - Animation-only clips (`Assets/Models/Animations/*.fbx`, under 1 MB each) stay in git via LFS as normal.
+  - Whoever runs a WebGL build must have both character files locally.
 
 ---
 
