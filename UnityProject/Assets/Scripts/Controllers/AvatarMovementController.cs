@@ -36,6 +36,15 @@ public class AvatarMovementController : MonoBehaviour
     private CharacterController controller;
     private float verticalVelocity;
 
+    // The avatar model's Animator. Empty until AvatarSpawner creates the model and calls
+    // SetAnimator — until then (e.g. with the plain capsule) we simply skip animation.
+    private Animator animator;
+
+    public void SetAnimator(Animator newAnimator)
+    {
+        animator = newAnimator;
+    }
+
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -75,6 +84,12 @@ public class AvatarMovementController : MonoBehaviour
         if (moveDirection.sqrMagnitude > 0.0001f)
         {
             transform.forward = moveDirection;
+        }
+
+        // "Speed" must match the parameter name in AvatarAnimator exactly (case-sensitive).
+        if (animator != null)
+        {
+            animator.SetFloat("Speed", CurrentSpeed);
         }
     }
 
