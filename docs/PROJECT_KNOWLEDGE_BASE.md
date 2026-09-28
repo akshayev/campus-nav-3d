@@ -2,7 +2,7 @@
 
 **Course:** 23-204-0713 Mini Project (Multimedia Project), CUSAT B.Tech IT
 **Institution:** Cochin University College of Engineering Kuttanad (CUCEK)
-**Last updated:** 2026-09-14
+**Last updated:** 2026-09-28
 
 > This is a **living document**. Every confirmed decision goes here. If it's not written down here, treat it as undecided — do not assume. Re-upload/reference this file at the start of every new session so nothing gets lost.
 
@@ -70,7 +70,7 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 
 ## 4. Technical Decisions
 
-- **Backend:** Firebase Firestore (not Realtime DB) — see SDD for schema (`buildings` collection).
+- **Backend:** Firebase Firestore (not Realtime DB) — see SDD for schema collections: exteriorPOIs, floors, floors/{floorId}/rooms (see SDD Section 3).
 - **Deployment priority:** **WebGL is primary** (easier live demo). Android APK is secondary/best-effort.
 - **Budget:** **zero** — free assets and free-tier services only (Firebase Spark plan, free Unity Asset Store items, free Mixamo).
 - **Character models are NOT in git** (decided 2026-09-27). The Mixamo avatars `men.fbx` (Ch08, 87 MB) and `women.fbx` (Ch26, 56 MB) together would eat most of GitHub's free Git LFS allowance (1 GB storage / 1 GB bandwidth per month) on the first few clones. So:
@@ -105,13 +105,14 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 - Final exact list/naming of interior rooms per floor (depends on team's walkthrough).
 - Which floor is the "guaranteed fully detailed" floor (suggest: IT department floor, since that's the team's own department — but not yet confirmed).
 - Whether Android build is attempted this cycle or deferred entirely.
+- **Unity version conflict, unresolved:** the committed `UnityProject/ProjectSettings/ProjectVersion.txt` currently says `6000.3.24f1` (last set in commit `0773af1`), but this document (Section 2/8) and `CLAUDE.md` both say `6000.6.0f1`. Nobody has picked one yet — do not change either the project file or the docs until the team agrees, since flip-flopping the Editor version churns `ProjectVersion.txt`/`packages-lock.json` every time.
 
 ---
 
 ## 7. Documents Produced So Far
 1. `SRS_Interactive_3D_Campus_Navigation.docx` — **Revision 2**, updated to the single-building scope (main building + MCA block), interior floor/room FRs, guaranteed-floor fallback (Section 2.7), and audio requirement (FR-14). Up to date.
 2. `SDD_STD_Interactive_3D_Campus_Navigation.docx` — **Revision 2**, updated Firebase schema (`exteriorPOIs`, `floors`, `floors/{id}/rooms`), per-floor additive sub-scene architecture, `FloorTransitionManager`/`AudioManager` components, and revised test cases. Up to date.
-3. `README.md`, `.gitignore`, `.gitattributes`, `WEEK1_ISSUES.md` — repo scaffolding, drafted and ready to commit.
+3. `README.md`, `.gitignore`, `.gitattributes` — repo scaffolding, drafted and ready to commit. `WEEK1_ISSUES.md` not committed; issues are created directly in GitHub.
 
 No outstanding revision action — both documents are current as of this update.
 
@@ -119,4 +120,26 @@ No outstanding revision action — both documents are current as of this update.
 - **Repo:** github.com/akshayev/campus-nav-3d (assumed public)
 - **Unity version:** 6 LTS (6000.6.0f1)
 - **Planned repo structure:** `/docs` (documents), `/UnityProject` (Unity project), `/reference` (photos, floor sketches)
-- **Week 1 issues drafted:** Unity scaffold, Blender onboarding, Firebase project creation, exterior reference/measurement pass, guaranteed-floor interior sketch, exterior blockout, joystick prototype, avatar selection screen, avatar/animation sourcing, NavMesh bake — see `WEEK1_ISSUES.md` for full text to paste into GitHub Issues.
+- **Week 1 issues drafted:** Unity scaffold, Blender onboarding, Firebase project creation, exterior reference/measurement pass, guaranteed-floor interior sketch, exterior blockout, joystick prototype, avatar selection screen, avatar/animation sourcing, NavMesh bake. `WEEK1_ISSUES.md` not committed; issues are created directly in GitHub.
+
+---
+
+## 10. Current Status (2026-09-28)
+
+**Done:**
+- Scripts: `VirtualJoystick`, `PlayerMovementInput`, `AvatarMovementController`, `CampusCameraController`, `AvatarSelectorController`, `AvatarSpawner`, `BuildScript` (batch-mode WebGL build entry point).
+- Scenes: `Exterior` set up (ground plane, lighting, camera, player, joystick UI); `AvatarSelect` set up (Male/Female selection flow).
+- Mixamo Idle/Walk/Run animations imported and wired to a shared Animator Controller.
+- Blender: OBJ blockout of the main building only (5-part greybox) — not yet imported into Blender or exported as FBX.
+
+**Not started:**
+- NavMesh
+- `Floor1` scene (exists in Build Settings, empty)
+- Firebase (no SDK, no config, no `FirebaseDataManager`)
+- POI scripts (`POITriggerVolume`, `POIManager`)
+- `FloorTransitionManager`
+- `AudioManager` / audio (no audio files in the repo)
+- `.blend` model (OBJ blockout hasn't been opened in Blender yet)
+- GitHub Issues (none created yet, despite Section 7/8 referencing an issue-tracking workflow)
+
+See Section 6 for the unresolved Unity version conflict.

@@ -4,6 +4,69 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 6 — Sync with origin/main (Hashir's Phases 4–5 merged locally)
+**Date:** 2026-09-28
+**Status:** ✅ Complete (no code changed)
+
+**Done:** stashed local PHASE_LOG edits, fast-forwarded 35f34e9..eb59040 (8 commits by Hashirc + merge eb59040 by Akshay EV), reapplied stash cleanly, no conflict markers. Renamed local "Phase 4/4.1" to "Blender Track B1/B1.1" to avoid number collision.
+
+**Verified (by reading):** AvatarSpawner.cs, AvatarSelectorController.cs, BuildScript.cs contain real logic. AvatarSelect scene populated (Canvas, AvatarSelector, EventSystem). Exterior has Player (renamed from AvatarPlaceholder). Floor1 still empty. Build order unchanged. No credentials tracked.
+
+**Not verified:** WebGL build on this machine; avatar spawning (men.fbx/women.fbx/textures absent locally, shared via team drive).
+
+**Open decisions:** Unity version (ProjectVersion.txt = 6000.3.24f1 vs CLAUDE.md = 6000.6.0f1); AGENTS.md drift from CLAUDE.md; gitignore generated .csproj/.slnx; obtain character binaries from drive.
+
+---
+
+## Blender Track B1.1 — Cleanup: stray folder removal + guide filename check
+**Date:** 2026-09-25
+**Status:** ✅ Complete
+
+**1. Deleted `~/Desktop/multimedia` entirely.** Confirmed gone (`ls` on the path
+now returns "No such file or directory"). This was the non-git stray folder
+that caused the file-location mixups in Phase 3 (loose stale doc copies) and
+Phase 4 (OBJ/MTL not actually in the repo). Before deleting, found one file in
+there that hadn't been rescued yet — `files (3)/preview_angle2.png`, a rendered
+preview of the greybox massing from a second angle — copied it into `Blender/`
+so it isn't lost. Everything else in that folder (stale README/CLAUDE.md/docs
+copies) was superseded by the real files already in this repo, so nothing else
+needed saving.
+
+**2. Checked `docs/BLENDER_GUI_GUIDE_MainBuilding.md` Step 1 against `Blender/`'s
+actual contents.** Guide references `Blender/CUCEK_MainBuilding_Blockout.obj`;
+actual file in `Blender/` is `CUCEK_MainBuilding_Blockout.obj` (confirmed via
+directory listing) — **exact match, no fix needed.** `Blender/` now also
+contains `CUCEK_MainBuilding_Blockout.mtl`, `README.md`, and the rescued
+`preview_angle2.png`, none of which conflict with anything the guide names.
+
+**Next planned task:** unchanged — Theertha/Anandhu work through the guide.
+
+---
+
+## Blender Track B1 — Main Building Blockout: Blender Setup (Issue #6, in progress)
+**Date:** 2026-09-25
+**Status:** ⚠️ Partially complete — file staged, manual-GUI path chosen, actual modeling not yet done
+
+**Path taken:** Checked for Blender CLI first, per instructions — `blender --version` returned `command not found`; Blender is not installed on this machine. The CLI-automated path (import/cleanup/export scripted end-to-end) was therefore **not possible**. Fell back to writing a numbered, beginner-level manual GUI guide for Theertha and Anandhu instead of attempting to fake or approximate the Blender steps.
+
+**Also found while starting this task:** the source `CUCEK_MainBuilding_Blockout.obj`/`.mtl` files referenced in the task were not actually in the repo yet (not in `UnityProject/Assets/Models/`, not in `/reference`) — they were sitting in `~/Downloads/files (4)/` and a stray `~/Desktop/multimedia/files (3)/` copy. Copied both into a new `Blender/` folder at the repo root (kept separate from `UnityProject/Assets`, since Unity only needs the final FBX).
+
+**Built:**
+- `Blender/` folder created at repo root, with `Blender/README.md` explaining its purpose (raw Blender sources, not Unity assets).
+- `Blender/CUCEK_MainBuilding_Blockout.obj` + `.mtl` — the 5-part greybox (`MainBlock`, `GroundPortico`, `Atrium`, `AtriumMast`, `RoofCornice`), confirmed by inspecting the OBJ directly: units meters, Z-up, origin at footprint center/ground level, with per-object bounding boxes matching the "rough box massing" description (e.g. `MainBlock` ≈ 44×16×20 m, `RoofCornice` ≈ 45.5×17.5×0.8 m). Material colors extracted from the `.mtl` and converted to hex for the guide (`facade_pink #DBA39E`, `atrium_glass #4D9E9E`, `roof_maroon #5C2924`, `trim_white #EDE6D9`, `mast_grey #8C8C8C`).
+- `docs/BLENDER_GUI_GUIDE_MainBuilding.md` — step-by-step manual instructions covering: OBJ import + metric units setup, normal recalculation + merge-by-distance cleanup, inset/loop-cut arch openings on `GroundPortico`, inset/loop-cut window-recess grid on `MainBlock` (5 rows, one per floor), applying the real material colors, and — the step most likely to bite beginners — FBX export with the Blender-Z-up → Unity-Y-up axis settings (`Forward: -Z`, `Up: Y`) spelled out explicitly, plus an Apply-Transforms step beforehand to avoid hidden-scale bugs.
+- No LFS/gitattributes changes needed for `.obj`, `.blend`, and `.fbx` — already covered by the existing `.gitattributes` rules. `.mtl` is plain text (483 bytes) and is not LFS-tracked; this is intentional and harmless at this size.
+
+**Not yet done (this is the actual state — nothing below has been verified, only prepared):**
+- The OBJ has **not** been imported into Blender by a human yet — no `.blend` file exists.
+- No arch openings, no window recesses, no material colors have actually been applied — the guide describes how to do this, it hasn't been executed.
+- `UnityProject/Assets/Models/CUCEK_MainBuilding.fbx` **does not exist yet** — so the Unity re-import/scale/orientation verification (step 8 of the guide) has **not** been performed. No dimension/scale/orientation issues can be reported yet because that check hasn't happened.
+- Building dimensions in the source OBJ remain estimates from reference photos, not real measurements (Issue #4, still open) — flagged again in the new guide so this doesn't get forgotten once modeling starts.
+
+**Next planned task:** Theertha/Anandhu work through `docs/BLENDER_GUI_GUIDE_MainBuilding.md` steps 0–8 and report back what they actually observe at the Unity re-import checkpoint (upright? correctly scaled against the 100×100 `GroundPlane`? at the origin?) — that report becomes the next PHASE_LOG entry, written from their actual findings, not assumed.
+
+---
+
 ## Phase 1 — Unity Project Scaffold (Issue #1)
 **Date:** 2026-09-14
 **Status:** ✅ Complete, committed pending push
