@@ -41,6 +41,11 @@ Thumbs.db
 # (see docs/PROJECT_KNOWLEDGE_BASE.md Section 4). Their .meta files ARE committed.
 UnityProject/Assets/Models/Characters/*.fbx
 
+# Extracted character textures (up to 24MB each, ~132MB total): same reason as the .fbx
+# above, shared via the same drive. Their .meta files ARE committed, and so are the small
+# .mat files that reference them — only the pixel data is excluded.
+UnityProject/Assets/Models/Characters/Textures/*.png
+
 # Testing
 coverage/
 

@@ -18,7 +18,7 @@ A Unity WebGL (primary) / Android (secondary) app letting a user walk a 3D avata
 - **Backend:** Firebase Firestore, free Spark plan. No paid Firebase features.
 - **Budget: zero.** Never suggest a paid Unity Asset Store package, paid plugin, or paid service. Free/open-source only (Mixamo free characters, Unity Asset Store free tier, free Blender).
 - **Version control:** Git + Git LFS. Any new binary asset type (models, textures, audio, video) must be added to `.gitattributes` LFS tracking, not committed raw.
-  - **Exception:** the Mixamo character `.fbx` files in `Assets/Models/Characters/` are deliberately gitignored (too big for the free LFS quota) and shared via drive; only their `.meta` files are committed. Don't "fix" this by committing them. See knowledge base Section 4.
+  - **Exception:** the Mixamo character `.fbx` files in `Assets/Models/Characters/` and their extracted `.png` textures in `Assets/Models/Characters/Textures/` are deliberately gitignored (too big for the free LFS quota) and shared via drive; only `.meta` files and the small `.mat` files are committed. Don't "fix" this by committing them. See knowledge base Section 4.
 - Never commit Firebase credentials (`google-services.json`, service account keys, etc.) — these must stay out of git per `.gitignore`.
 
 ## Current scope (see docs/PROJECT_KNOWLEDGE_BASE.md Section 3 for full detail)

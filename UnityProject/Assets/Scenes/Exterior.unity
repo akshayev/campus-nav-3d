@@ -410,6 +410,7 @@ GameObject:
   - component: {fileID: 742483461}
   - component: {fileID: 742483460}
   - component: {fileID: 742483464}
+  - component: {fileID: 742483465}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -530,6 +531,21 @@ MonoBehaviour:
   gravity: -9.81
   maxFallSpeed: 20
   cameraTransform: {fileID: 0}
+--- !u!114 &742483465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 742483459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98def1963fb23f4d9656b9c7be43f0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AvatarSpawner
+  avatarPrefabs:
+  - {fileID: 9132442963168633347, guid: 05d0d2de1fd36ac42962a50296445f30, type: 3}
+  - {fileID: 6884451483534601878, guid: a30c613f52a53c648a051249d5c38001, type: 3}
 --- !u!1 &953536819
 GameObject:
   m_ObjectHideFlags: 0

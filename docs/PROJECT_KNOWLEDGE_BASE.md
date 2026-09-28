@@ -78,6 +78,10 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
   - Their `.meta` files **are** committed — they hold the Humanoid rig settings and the asset GUIDs that prefabs reference, so dropping the `.fbx` into that folder reconnects everything automatically.
   - Animation-only clips (`Assets/Models/Animations/*.fbx`, under 1 MB each) stay in git via LFS as normal.
   - Whoever runs a WebGL build must have both character files locally.
+- **Extracted character textures are also NOT in git** (decided 2026-09-28, same reasoning). Fixing the "plain white" material problem (see below) required extracting each character's embedded textures to `UnityProject/Assets/Models/Characters/Textures/`, which totaled ~132 MB across 16 files (individual normal maps up to 24 MB). Same treatment as the `.fbx` files:
+  - The `.png` files are gitignored and shared via the same team drive as `men.fbx`/`women.fbx`.
+  - Their `.meta` files **are** committed, along with the small `.mat` material files that reference them by GUID — dropping the shared `.png` files into that exact folder lets Unity reuse the existing `.meta` ID instead of generating a new one, so the materials reconnect automatically instead of showing missing-texture pink.
+  - **Mixamo import note:** Mixamo's embedded FBX materials don't always link their textures automatically on import (shows as plain white, not pink). Fix: select the character FBX → Inspector → **Materials** tab → **Extract Textures...** then **Extract Materials...**. Needed once per character, on each teammate's machine, after they drop in the shared `.fbx`/`.png` files.
 
 ---
 

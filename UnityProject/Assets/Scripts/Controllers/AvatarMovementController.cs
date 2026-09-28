@@ -40,6 +40,11 @@ public class AvatarMovementController : MonoBehaviour
     // SetAnimator — until then (e.g. with the plain capsule) we simply skip animation.
     private Animator animator;
 
+    // A one-time snapshot of the camera's facing, taken at Awake. See the comment in Awake
+    // for why we don't just read cameraTransform.forward/right fresh every frame.
+    private Vector3 cameraForward;
+    private Vector3 cameraRight;
+
     public void SetAnimator(Animator newAnimator)
     {
         animator = newAnimator;
@@ -52,6 +57,23 @@ public class AvatarMovementController : MonoBehaviour
         {
             cameraTransform = Camera.main.transform;
         }
+
+        // CampusCameraController re-aims the camera at us (LookAt) every frame, and its
+        // position eases toward us with a slight delay (SmoothDamp). If we read the camera's
+        // live rotation here, we'd get a feedback loop: we turn to face where the camera is
+        // looking, which makes the camera re-aim at our new facing, which changes where we
+        // turn next, and so on — in practice this makes movement drift and eventually stop
+        // responding correctly. Our camera has a fixed offset and never orbits under player
+        // control, so its starting direction is the only one that should ever matter — we
+        // capture it once, here, before anything has had a chance to move.
+        cameraForward = FlattenAndNormalize(cameraTransform.forward);
+        cameraRight = FlattenAndNormalize(cameraTransform.right);
+    }
+
+    private static Vector3 FlattenAndNormalize(Vector3 vector)
+    {
+        vector.y = 0f;
+        return vector.normalized;
     }
 
     private void Update()
@@ -93,19 +115,11 @@ public class AvatarMovementController : MonoBehaviour
         }
     }
 
-    // Turns a 2D stick direction (x = right, y = forward) into a flat 3D direction based on
-    // where the camera is looking. We ignore the camera's up/down tilt (y = 0) so looking
-    // down at the avatar doesn't make "forward" point into the ground.
+    // Turns a 2D stick direction (x = right, y = forward) into a flat 3D direction, using the
+    // camera's ORIGINAL facing (captured once in Awake — see the comment there).
     private Vector3 GetCameraRelativeDirection(Vector2 input)
     {
-        Vector3 forward = cameraTransform.forward;
-        Vector3 right = cameraTransform.right;
-        forward.y = 0f;
-        right.y = 0f;
-        forward.Normalize();
-        right.Normalize();
-
-        Vector3 direction = forward * input.y + right * input.x;
+        Vector3 direction = cameraForward * input.y + cameraRight * input.x;
         return Vector3.ClampMagnitude(direction, 1f);
     }
 }
