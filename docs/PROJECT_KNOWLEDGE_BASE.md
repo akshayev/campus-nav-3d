@@ -73,6 +73,15 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 - **Backend:** Firebase Firestore (not Realtime DB) — see SDD for schema (`buildings` collection).
 - **Deployment priority:** **WebGL is primary** (easier live demo). Android APK is secondary/best-effort.
 - **Budget:** **zero** — free assets and free-tier services only (Firebase Spark plan, free Unity Asset Store items, free Mixamo).
+- **Character models are NOT in git** (decided 2026-09-27). The Mixamo avatars `men.fbx` (Ch08, 87 MB) and `women.fbx` (Ch26, 56 MB) together would eat most of GitHub's free Git LFS allowance (1 GB storage / 1 GB bandwidth per month) on the first few clones. So:
+  - The `.fbx` files in `UnityProject/Assets/Models/Characters/` are gitignored and shared via a team shared drive instead.
+  - Their `.meta` files **are** committed — they hold the Humanoid rig settings and the asset GUIDs that prefabs reference, so dropping the `.fbx` into that folder reconnects everything automatically.
+  - Animation-only clips (`Assets/Models/Animations/*.fbx`, under 1 MB each) stay in git via LFS as normal.
+  - Whoever runs a WebGL build must have both character files locally.
+- **Extracted character textures are also NOT in git** (decided 2026-09-28, same reasoning). Fixing the "plain white" material problem (see below) required extracting each character's embedded textures to `UnityProject/Assets/Models/Characters/Textures/`, which totaled ~132 MB across 16 files (individual normal maps up to 24 MB). Same treatment as the `.fbx` files:
+  - The `.png` files are gitignored and shared via the same team drive as `men.fbx`/`women.fbx`.
+  - Their `.meta` files **are** committed, along with the small `.mat` material files that reference them by GUID — dropping the shared `.png` files into that exact folder lets Unity reuse the existing `.meta` ID instead of generating a new one, so the materials reconnect automatically instead of showing missing-texture pink.
+  - **Mixamo import note:** Mixamo's embedded FBX materials don't always link their textures automatically on import (shows as plain white, not pink). Fix: select the character FBX → Inspector → **Materials** tab → **Extract Textures...** then **Extract Materials...**. Needed once per character, on each teammate's machine, after they drop in the shared `.fbx`/`.png` files.
 
 ---
 

@@ -103,4 +103,67 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 4 — Movement/Input/Camera Spec Alignment
+**Date:** 2026-09-27
+**Status:** ✅ Complete, build-verified, and committed (`dc8384a`, `646aa55`)
+
+**Built / changed:**
+- `Exterior.unity`: avatar capsule renamed `AvatarPlaceholder` → `Player` (still on the `Player` layer, at (0,1,0), with CharacterController).
+- `AvatarMovementController.cs`: movement is now **camera-relative** (flattened camera forward/right), uses `Camera.main` unless a camera is assigned; new public `CurrentSpeed` property (horizontal units/sec) for the future Animator. No animation code.
+- `VirtualJoystick.cs`: public output renamed `InputDirection` → `Direction`.
+- `PlayerMovementInput.cs`: joystick + keyboard now converge in one method, `ReadMoveInput()` (joystick wins when active, else WASD/arrows).
+- New `Assets/Editor/BuildScript.cs` with `BuildScript.BuildWebGL` — the batch-mode command in CLAUDE.md now actually works. Output: `UnityProject/Builds/WebGL/` (gitignored).
+
+**Deliberate deviations from the task spec:**
+- Kept `PlayerMovementInput` as the single input convergence point instead of having `AvatarMovementController` read the joystick directly — same outcome, no scene rewiring.
+- Kept camera collision handling from Phase 3 even though the spec said "no camera collision handling". Remove if the team prefers.
+
+**Verification performed:**
+- Batch-mode WebGL build: `Build Finished, Result: Success`, 0 errors, exit code 0.
+
+**Open issue — needs a team decision:**
+- Commit `0773af1` saved the project with **Unity 6000.3.24f1**, but CLAUDE.md specifies 6000.6.0f1. Building with 6000.6.0f1 upgraded `ProjectVersion.txt` and `packages-lock.json`. Everyone must agree on one editor version before committing.
+- Generated IDE files (`*.csproj`, `*.slnx`) are tracked in git since `0773af1`; they should be gitignored.
+
+**Next planned task:** Issue #6 (exterior Blender blockout) — real geometry is needed to test movement boundaries/NavMesh and camera collision.
+
+---
+
+## Phase 5 — Mixamo Avatars, Animator, Avatar Select Screen (Issue: avatar/animation sourcing)
+**Date:** 2026-09-27 to 2026-09-28
+**Status:** ✅ Complete, build-verified, committed (`646aa55`, `ecb7d21`, `be28820`, `57f7d5f`)
+
+**Built:**
+- Downloaded Mixamo `Y Bot`/`X Bot`-equivalent characters (`men.fbx` = Ch08, `women.fbx` = Ch26, With Skin) and shared Idle/Walking/Running clips (Without Skin, In Place), imported as Humanoid.
+- `AvatarAnimator.controller`: shared Animator Controller — Idle/Walk/Run states driven by a float `Speed` (thresholds 0.1 / 2.5), no exit-time waits, 0.15s blends.
+- `AvatarMovementController.cs`: added `SetAnimator()` + per-frame `animator.SetFloat("Speed", CurrentSpeed)`. Movement/gravity/rotation logic otherwise unchanged.
+- `AvatarSelectorController.cs` + `AvatarSelect.unity`: Male/Female buttons save the choice via `PlayerPrefs` and load `Exterior`.
+- `AvatarSpawner.cs`: reads the saved choice at scene start, instantiates the matching Humanoid prefab (`MaleAvatar`/`FemaleAvatar`, Prefab Variants of `men`/`women`) as a child of `Player`, hides the placeholder capsule's `MeshRenderer`, disables root motion, hands the model's `Animator` to `AvatarMovementController`.
+- Extracted Mixamo's embedded materials/textures (`Extract Textures...` / `Extract Materials...`) — fixes a plain-white-material import quirk.
+- Imported TMP Essentials (needed for the Avatar Select buttons' text).
+- Added `Assets/Editor/BuildScript.cs` (`BuildScript.BuildWebGL`) so the batch-mode command in CLAUDE.md actually works — it didn't exist before this phase.
+
+**Bugs found and fixed during this phase:**
+- **Movement freeze/drift:** `AvatarMovementController` was reading `cameraTransform.forward/right` live every frame for camera-relative movement. Since `CampusCameraController` re-aims at the avatar every frame (`LookAt`) and its position lags via `SmoothDamp`, this created a feedback loop (avatar steers by camera → camera re-aims at avatar → basis changes → avatar steers differently) that made movement drift and stop responding correctly after sustained input. Fixed by snapshotting the camera's facing **once**, in `Awake()`, since this camera has a fixed offset and never orbits under player control.
+- **Four nonexistent packages in `manifest.json`** (`com.unity.pipeline`, `com.unity.modules.physicscore2d`, `.tetgen`, `.timelinefoundation`) had been silently broken since the very first scaffold commit (Phase 1) — surfaced as "Project has invalid dependencies" the first time the Editor tried a fresh package resolve this phase. Removed; see commit `646aa55`.
+- **`Assets/Scripts/` got dragged inside `Assets/Scenes/`** at some point during manual Editor testing (an easy Project-window drag-and-drop slip). Moved back at the filesystem level with Unity closed — `.meta` GUIDs were unaffected, confirmed unchanged before/after.
+- Two stray `Animator` components + auto-generated controllers got added to `GroundPlane` and `JoystickCanvas` from an accidental clip-onto-object drag; removed.
+
+**Decisions made this phase (see `PROJECT_KNOWLEDGE_BASE.md` Section 4 for full reasoning):**
+- Character `.fbx` files (143MB combined) and their extracted textures (~132MB) are **gitignored** and shared via team drive instead of Git LFS, to stay inside GitHub's free 1GB/month LFS quota. Only `.meta` files and the small `.mat` files are committed, so GUIDs stay consistent across the team once the shared binaries are dropped into the same paths.
+
+**Verification performed:**
+- Batch-mode WebGL build: `Build Finished, Result: Success`, 0 real errors (one "error" reported by BuildReport is a benign `[Licensing::Module]` telemetry log line, unrelated to the build).
+- Manually tested in Editor: movement in all directions for an extended period without freezing/drift; both Male and Female avatars spawn correctly from Avatar Select; Idle/Walk/Run animations switch correctly; characters are fully textured (not white/pink).
+- Confirmed avatar height matches the old placeholder capsule.
+
+**Known gaps (not blockers):**
+- Falling off the edge of the unbounded 100×100 `GroundPlane` still happens (no NavMesh/boundary yet — tied to Issue #6, not this phase). At sustained fall speed the camera's smooth-follow catches up and matches the avatar's velocity, which can *look* like a freeze even though both are actually in freefall — worth knowing if it comes up again during testing.
+- Unity version mismatch is still unresolved: this phase was built/verified on 6000.3.24f1, but CLAUDE.md specifies 6000.6.0f1. Needs a team decision before more version-file churn happens.
+- Generated IDE files (`*.csproj`, `.slnx`) are still tracked in git since `0773af1`; should be gitignored.
+
+**Next planned task:** Issue #6 (exterior Blender blockout) — real geometry is needed before NavMesh/movement boundaries and meaningful camera-collision testing can happen.
+
+---
+
 <!-- Add new entries above this line, newest first. -->
