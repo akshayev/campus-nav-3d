@@ -4,6 +4,36 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 7 — Exterior Boundary Walls + POI Trigger Popups (Hardcoded Data)
+**Date:** 2026-10-04 to 2026-10-10
+**Status:** ✅ Complete, build-verified, committed and pushed (`f27c596`, PR #3 on `feature/exterior-poi-boundary`)
+
+**Built:**
+- Four invisible solid Box Colliders (`Wall_North/South/East/West`, children of a `Boundaries` empty) placed 1 unit past each edge of the 100×100 `GroundPlane`. No script — pure Editor setup. The avatar can no longer walk off the edge and fall (previously-documented known gap from Phase 2, now closed).
+- `POITriggerVolume.cs`: sits on a trigger Box Collider, holds a `poiId` string, calls `POIManager.Instance.ShowPOI`/`HidePOI` on Player enter/exit. Only reacts to objects tagged `Player`.
+- `POIData.cs` / `POIManager.cs`: six hardcoded POIs (main building, MCA block, bike shed, car shed, canteen, indoor badminton court) as a `List<POIData>` singleton, same `Instance` pattern as `PlayerMovementInput`. Chose a plain `[Serializable]` class over a ScriptableObject since one Inspector list is simpler than six asset files for this data size, and it maps directly onto a future Firestore document read without needing `POITriggerVolume` or the scene's trigger objects to change.
+- `POICanvas` / `POIPopupPanel`: a dismissible popup (title, description, close button) anchored top-center, clear of the joystick's bottom-left footprint (per SRS usability requirement).
+- Six `POI_*` GameObjects placed around the ground plane (inside the new boundary), each a trigger volume plus a child `Cube` placeholder marker — no real building geometry exists yet (Blender exterior blockout track, tracked separately, still in progress as of this phase).
+- `Player` GameObject tagged `Player` (was `Untagged` since it was first created in Phase 2) — required for any trigger volume to fire.
+
+**Bug found and fixed during this phase:**
+- My own instructions for the popup's title/description text Y positions assumed the text elements would anchor to the panel's top edge, but Unity's default anchor for new UI text is the parent's center. This made the description text overhang 40px past the bottom of the panel. Caught via the user's manual test; fixed by recalculating both Y values for a center-anchored layout (title 85, description -10) rather than changing the anchor itself. Confirmed by computing both elements' vertical spans against the panel's bounds directly from the saved scene file, rather than re-trusting a re-test.
+
+**Verification performed:**
+- Scene file parsed directly (not just taken on the tester's word) after each step: boundary wall positions/sizes/IsTrigger, POI trigger positions/sizes/poiId strings, POIManager's three Inspector field references, cube marker parenting and absence of duplicate colliders — all confirmed to match spec exactly.
+- Manual in-Editor test (reported by user, consistent with the file-level checks): boundary walls stop the avatar at all four edges; all six POIs show the correct popup on entry and hide it on exit; close button works; no red Console errors.
+- Batch-mode WebGL build: `Build Finished, Result: Success`, 0 real compile errors (the one "error" BuildReport counts is the same benign `[Licensing::Module]` telemetry log line seen in every batch build this project, unrelated to the build itself).
+
+**Known gaps (not blockers, carried over):**
+- POI positions are placeholders on bare ground — no real building geometry yet (separate Blender track).
+- POI data is hardcoded in C#, not yet backed by Firestore (deliberately out of scope for this task).
+- Unity version mismatch (6000.3.24f1 on disk vs 6000.6.0f1 in CLAUDE.md) still unresolved.
+- Generated IDE files (`*.csproj`, `.slnx`) are gitignored now (fixed in PR #2) but Unity still regenerates untracked local copies each session — harmless, just noise in `git status`.
+
+**Next planned task:** depends on which finishes first — Theertha/Anandhu completing the Blender exterior blockout (after which the placeholder cube markers get replaced with real geometry and POI positions get corrected to match), or starting the Firebase/Firestore integration to replace the hardcoded POI list.
+
+---
+
 ## Phase 6 — Sync with origin/main (Hashir's Phases 4–5 merged locally)
 **Date:** 2026-09-28
 **Status:** ✅ Complete (no code changed)
