@@ -27,6 +27,10 @@ public class FloorTransitionManager : MonoBehaviour
     // POIManager's list again when the player leaves (see ClearRoomPOIs below).
     private List<string> currentRoomIds = new List<string>();
 
+    // The runtime-generated trigger-volume GameObjects for the current floor's rooms (see
+    // SpawnRoomTriggers), destroyed again when the player leaves the floor.
+    private List<GameObject> currentRoomTriggers = new List<GameObject>();
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -80,8 +84,35 @@ public class FloorTransitionManager : MonoBehaviour
             {
                 POIManager.Instance.AddRoomPOIs(rooms);
             }
+            SpawnRoomTriggers(rooms);
             Debug.Log($"FloorTransitionManager: loaded {rooms.Count} room(s) for '{floor.floorId}'.");
         });
+    }
+
+    // Builds one invisible trigger Box Collider per room, positioned/sized from the room's
+    // Firestore data (position, poiRadius), with a RoomTriggerVolume component watching it.
+    // This is what makes a room popup actually appear when the Player walks near it — without
+    // this, AddRoomPOIs only registers the room's text, nothing in the scene detects the Player.
+    //
+    // These coordinates are placeholders (no real floor-plan measurements exist yet, see
+    // /reference) — correct room shapes/positions are a later task once real measurements exist.
+    private void SpawnRoomTriggers(List<RoomData> rooms)
+    {
+        foreach (RoomData room in rooms)
+        {
+            GameObject trigger = new GameObject($"RoomTrigger_{room.roomId}");
+            trigger.transform.position = room.position;
+
+            BoxCollider collider = trigger.AddComponent<BoxCollider>();
+            collider.isTrigger = true;
+            float size = room.poiRadius * 2f;
+            collider.size = new Vector3(size, size, size);
+
+            RoomTriggerVolume volume = trigger.AddComponent<RoomTriggerVolume>();
+            volume.roomId = room.roomId;
+
+            currentRoomTriggers.Add(trigger);
+        }
     }
 
     public void ExitFloor(Vector3 spawnPosition)
@@ -105,6 +136,15 @@ public class FloorTransitionManager : MonoBehaviour
             POIManager.Instance.ClearRoomPOIs(currentRoomIds);
         }
         currentRoomIds.Clear();
+
+        foreach (GameObject trigger in currentRoomTriggers)
+        {
+            if (trigger != null)
+            {
+                Destroy(trigger);
+            }
+        }
+        currentRoomTriggers.Clear();
 
         yield return SceneManager.UnloadSceneAsync(sceneToUnload);
 
