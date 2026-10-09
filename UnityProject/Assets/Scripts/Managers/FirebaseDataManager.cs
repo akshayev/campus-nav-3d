@@ -272,7 +272,7 @@ public class FirebaseDataManager : MonoBehaviour
             result.Add(new RoomData
             {
                 roomId = roomId,
-                displayName = (string)fields?["name"]?["stringValue"],
+                displayName = (string)fields?["displayName"]?["stringValue"],
                 description = (string)fields?["description"]?["stringValue"],
                 position = new Vector3(px, py, pz),
                 poiRadius = radius > 0f ? radius : 2f,
