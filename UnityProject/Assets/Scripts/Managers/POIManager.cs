@@ -79,4 +79,16 @@ public class POIManager : MonoBehaviour
             popupPanel.SetActive(false);
         }
     }
+
+    // Called by FirebaseDataManager once a Firestore fetch succeeds. We only ever REPLACE
+    // the list on a confirmed, non-empty result — never clear it — so a failed or slow
+    // fetch simply leaves the hardcoded data in place instead of breaking the POI popups.
+    public void ReplacePOIList(List<POIData> newPois)
+    {
+        if (newPois == null || newPois.Count == 0)
+        {
+            return;
+        }
+        pois = newPois;
+    }
 }

@@ -4,6 +4,30 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 8 — Firebase/Firestore Integration for Exterior POIs
+**Date:** 2026-10-10
+**Status:** ✅ Complete, build-verified in a real browser, committed and pushed (`ee9e4c1` on `feature/firebase-poi-integration`)
+
+**Built:**
+- Firebase project `cucek-campus-nav` created (Firestore in `asia-south1`/Mumbai, production mode), security rules published as public-read / no client write (`allow read: if true; allow write: if false;`), web app registered.
+- Decided against the official Firebase Unity SDK: it's built on native code and can't compile to WebAssembly, so it has no WebGL support, and WebGL is this project's primary target per CLAUDE.md.
+- `FirebaseDataManager.cs`: fetches the `exteriorPOIs` Firestore collection over plain HTTPS using the Firestore REST API + `UnityWebRequest` (not the SDK). Parses Firestore's field-wrapper JSON (`{"stringValue": "..."}`) with the Newtonsoft Json package (added as an explicit `manifest.json` dependency). The public Firebase web API key is stored directly as an Inspector default — this is fine, these keys are meant to be public; security comes from the Firestore rules, not from hiding the key.
+- `POIManager.ReplacePOIList()`: only swaps in Firestore data on a confirmed, non-empty fetch — a failed fetch, no internet, or an empty collection all just leave the Phase 7 hardcoded POI list in place untouched. This is what makes the hardcoded list a real offline fallback rather than a placeholder that breaks the moment Firebase is involved.
+- All six `exteriorPOIs` documents now exist in Firestore (`main_building`, `mca_block`, `bike_shed`, `car_shed`, `canteen`, `badminton_court`), each with `id`/`displayName`/`description` string fields, added via the Firebase Console (no code change needed for this).
+
+**Verification performed:**
+- Editor test against live Firestore: all six POI popups showed Firestore-sourced title/description text, Console logged `FirebaseDataManager: loaded 6 POI(s) from Firestore.`, zero errors.
+- Batch-mode WebGL build succeeded (same benign licensing-telemetry "error" line as every other batch build, unrelated to the build itself).
+- Real browser test of the WebGL build served locally over HTTP (not `file://`): hit and fixed two unrelated local-server bugs along the way (missing `Content-Encoding: gzip` header for Unity's gzip-compressed build output, and a stale-cache issue where the browser kept reusing a 304-cached broken response after the header was fixed — solved with a `Cache-Control: no-store` header). Once fixed: app loads past the progress bar, all six POI popups show Firestore-sourced text, no CORS errors in DevTools.
+
+**Known gaps / flagged, not acted on (user's call):**
+- Firebase project currently has no teammates added (personal Gmail account only).
+- The local test server script (`UnityProject/Builds/WebGL/serve_gzip.py`) lives inside the gitignored `Builds/` folder and will be deleted the next time someone builds — worth moving to a persistent, tracked location (e.g. a `/tools` folder) if the team wants to keep reusing it for local WebGL testing.
+
+**Next planned task:** pick between whichever finishes first — the Blender exterior blockout, or starting on the floor/interior system (`floors`, `floors/{floorId}/rooms` collections).
+
+---
+
 ## Phase 7 — Exterior Boundary Walls + POI Trigger Popups (Hardcoded Data)
 **Date:** 2026-10-04 to 2026-10-10
 **Status:** ✅ Complete, build-verified, committed and pushed (`f27c596`, PR #3 on `feature/exterior-poi-boundary`)

@@ -2,7 +2,7 @@
 
 **Course:** 23-204-0713 Mini Project (Multimedia Project), CUSAT B.Tech IT
 **Institution:** Cochin University College of Engineering Kuttanad (CUCEK)
-**Last updated:** 2026-09-28
+**Last updated:** 2026-10-07
 
 > This is a **living document**. Every confirmed decision goes here. If it's not written down here, treat it as undecided — do not assume. Re-upload/reference this file at the start of every new session so nothing gets lost.
 
@@ -82,6 +82,7 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
   - The `.png` files are gitignored and shared via the same team drive as `men.fbx`/`women.fbx`.
   - Their `.meta` files **are** committed, along with the small `.mat` material files that reference them by GUID — dropping the shared `.png` files into that exact folder lets Unity reuse the existing `.meta` ID instead of generating a new one, so the materials reconnect automatically instead of showing missing-texture pink.
   - **Mixamo import note:** Mixamo's embedded FBX materials don't always link their textures automatically on import (shows as plain white, not pink). Fix: select the character FBX → Inspector → **Materials** tab → **Extract Textures...** then **Extract Materials...**. Needed once per character, on each teammate's machine, after they drop in the shared `.fbx`/`.png` files.
+- **No NavMesh / no NavMeshAgent** (decided 2026-10-10, re-confirming the implicit Phase 2 choice). The avatar stays on `CharacterController` with plain Unity colliders (boundary walls, and building geometry once it exists) for movement and collision — this is already built and verified (Phase 7). Switching to a `NavMeshAgent`-driven avatar later would be a real rework of `AvatarMovementController`'s movement model, not an addition, so it's being treated as a closed decision rather than revisited per-phase. "NavMesh" in the original Week 1 issue list / Section 5 plan is superseded by this — see the Week 2 row above, now "collision-constrained movement".
 
 ---
 
@@ -95,7 +96,7 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 | Week | Focus |
 |---|---|
 | 1 | Tooling setup (Unity, Blender, Git, Firebase), repo + issue board created, Unity/Blender basics, exterior blockout |
-| 2 | Exterior fully walkable: avatar select, joystick, NavMesh, POI popups for bike/car shed, canteen, badminton court |
+| 2 | Exterior fully walkable: avatar select, joystick, collision-constrained movement, POI popups for bike/car shed, canteen, badminton court |
 | 3 | Interior: guaranteed 1 full floor walkable; expand to more floors if ahead of schedule |
 | 4 | Firebase integration, WebGL (+ Android if time) builds, testing against STD, polish, report/demo prep |
 
@@ -124,19 +125,22 @@ No outstanding revision action — both documents are current as of this update.
 
 ---
 
-## 10. Current Status (2026-09-28)
+## 10. Current Status (2026-10-07)
 
 **Done:**
 - Scripts: `VirtualJoystick`, `PlayerMovementInput`, `AvatarMovementController`, `CampusCameraController`, `AvatarSelectorController`, `AvatarSpawner`, `BuildScript` (batch-mode WebGL build entry point).
 - Scenes: `Exterior` set up (ground plane, lighting, camera, player, joystick UI); `AvatarSelect` set up (Male/Female selection flow).
 - Mixamo Idle/Walk/Run animations imported and wired to a shared Animator Controller.
 - Blender: OBJ blockout of the main building only (5-part greybox) — not yet imported into Blender or exported as FBX.
+- Scripts: `POITriggerVolume`, `POIManager`, `POIData` (hardcoded six exterior POIs; structured for a Firestore read to replace the hardcoded fill later).
+- `Exterior` scene: four invisible boundary walls around `GroundPlane`'s edges (avatar can no longer walk off and fall); six placeholder POI trigger zones with cube markers; dismissible popup UI.
+
+**Decided against:**
+- NavMesh / NavMeshAgent — see Section 4. Movement stays on `CharacterController` + colliders.
 
 **Not started:**
-- NavMesh
 - `Floor1` scene (exists in Build Settings, empty)
-- Firebase (no SDK, no config, no `FirebaseDataManager`)
-- POI scripts (`POITriggerVolume`, `POIManager`)
+- Firebase (no SDK, no config, no `FirebaseDataManager` — starting this now, see `PHASE_LOG.md` for progress)
 - `FloorTransitionManager`
 - `AudioManager` / audio (no audio files in the repo)
 - `.blend` model (OBJ blockout hasn't been opened in Blender yet)
