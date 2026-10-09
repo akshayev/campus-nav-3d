@@ -4,6 +4,35 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 9 — Firestore Link + Ground-Floor Room Data + Room Trigger Spawning
+**Date:** 2026-10-10
+**Status:** ✅ Complete, in-Editor verified, committed on `feature/floor-interior-system` (`1c35b81`, `928fe67`, `3eca209`), not yet pushed
+
+**Built:**
+- Firebase MCP server connected and working (earlier `CONNECT_TIMEOUT` was just a cold npx cache, resolved by itself). Repo linked to the `cucek-campus-nav` Firebase project via `firebase_init` (Firestore only): `.firebaserc`, `firebase.json`, `firestore.indexes.json` added.
+- `firestore.rules` fixed before committing: `firebase_init`'s generated file was the generic "open read/write until 30 days" default, which did NOT match the actually-published production rules (public read, no write) from Phase 8 — would have silently downgraded security on the next `firebase deploy`. Rewrote it to match production and validated with `firebase_validate_security_rules`.
+- Bug fix: `FirebaseDataManager.ParseRoomsResponse()` read a Firestore field called `name` that doesn't exist anywhere — `RoomData.cs` and every room document use `displayName`. Room titles were coming back blank. Fixed to read `displayName`.
+- Real ground-floor room data (CS department, per team's description, not yet measured — `/reference` is still empty) added to Firestore: one `floors/FLOOR_1` document (`label: "Ground Floor — CS Department"`, `sceneName: "Floor1"`, `isGuaranteed: true`) and 11 `rooms` subdocuments — one side: Office, Exam Cell, Classroom 1, Gents Toilet, Ladies Toilet, CS Dept Staffroom; opposite side: Classroom 2/3/4, Principal's Room, Exam Control Room. Positions are placeholder coordinates (two rows at z=+5/-5, spread along x) since no real measurements exist yet — will need correcting once someone measures the actual building.
+- Caught and fixed a document-ID mismatch while wiring this up: `FirebaseDataManager.FetchRoomsForFloor()` builds its URL as `floors/{floorId}/rooms`, using the `floorId` *field value* directly as the Firestore *document ID* path segment — so the floor document's ID had to literally be `FLOOR_1` (matching the scene's `StairsTriggerVolume.floorId`), not an arbitrary ID like the `floor1` first used.
+- `RoomTriggerVolume.cs` (new): same enter/exit → show/hide popup pattern as `POITriggerVolume.cs`, but with a public `roomId` field instead of an Inspector-set one, since it's meant to be added via `AddComponent` at runtime rather than hand-placed.
+- `FloorTransitionManager.SpawnRoomTriggers()`: builds one Box Collider + `RoomTriggerVolume` per room from Firestore's `position`/`poiRadius` when a floor loads, tracks them in a list, and destroys them all on floor exit. Before this, `POIManager.AddRoomPOIs()` only registered room text in the popup lookup — nothing in the scene ever detected the Player to trigger it.
+- Moved `SpawnPoint_Floor1Entry` from (0,1,50) to (0,1,0) in the Exterior scene, closer to the new room trigger positions, for easier manual testing.
+
+**Verification performed:**
+- Editor Play-mode test: walked into `StairsEntrance_ToFloor1`, Console logged `loaded 1 floor(s)`, `entered 'Ground Floor — CS Department'`, `loaded 11 room(s) for 'FLOOR_1'` — confirmed `RoomTrigger_room_*` GameObjects appear in the Hierarchy (one per room).
+- Teleported the Player (via Inspector Transform, paused) to the "Office" room's exact coordinates; confirmed its popup appeared.
+- Firestore rules validated via `firebase_validate_security_rules` (no errors) and cross-checked against the live published rules via `firebase_get_security_rules` before committing, so the local file can't accidentally downgrade production security on a future deploy.
+
+**Known gaps / flagged, not acted on:**
+- Room trigger positions are placeholder coordinates, not measured from the real building — `/reference` has no sketches yet.
+- `Floor1` has no boundary walls yet (unlike `Exterior`), so walking off the placeholder ground has no edge — ran into this during manual testing (looked like "values gradually increasing" but was actually a stuck-keyboard-axis bug from editing the Inspector mid-Play, not a boundary issue — worth fixing properly with real boundaries once there's real floor geometry).
+- Spawned `RoomTrigger_*` GameObjects land in the `Exterior` scene group in the Hierarchy (not `Floor1`), since `new GameObject()` goes into whichever scene is "active" — harmless (cleanup is done by explicit reference, not scene-unload), but worth knowing so it isn't mistaken for a bug.
+- Firebase project still has no teammates added (personal Gmail account only) — carried over from Phase 8.
+
+**Next planned task:** get real ground-floor measurements into `/reference` so room positions can be corrected, and/or continue toward whichever of the Blender exterior blockout / remaining interior floors is next per the team's plan.
+
+---
+
 ## Phase 8 — Firebase/Firestore Integration for Exterior POIs
 **Date:** 2026-10-10
 **Status:** ✅ Complete, build-verified in a real browser, committed and pushed (`ee9e4c1` on `feature/firebase-poi-integration`)
