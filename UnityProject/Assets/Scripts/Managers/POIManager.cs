@@ -91,4 +91,38 @@ public class POIManager : MonoBehaviour
         }
         pois = newPois;
     }
+
+    // Called by FloorTransitionManager after it loads a floor and fetches that floor's rooms.
+    // Rooms are ADDED on top of the existing (exterior) POI list, not a replacement, so a room
+    // trigger and an exterior POI trigger can both show a popup through the same panel.
+    public void AddRoomPOIs(List<RoomData> rooms)
+    {
+        if (rooms == null)
+        {
+            return;
+        }
+
+        foreach (RoomData room in rooms)
+        {
+            pois.Add(new POIData
+            {
+                id = room.roomId,
+                displayName = room.displayName,
+                description = room.description,
+            });
+        }
+    }
+
+    // Called by FloorTransitionManager when the player leaves a floor, so a room from a floor
+    // that's no longer loaded can't be found again by a stale id (its trigger volume is gone
+    // too, destroyed along with the floor scene, but this keeps the list itself clean).
+    public void ClearRoomPOIs(List<string> roomIds)
+    {
+        if (roomIds == null || roomIds.Count == 0)
+        {
+            return;
+        }
+
+        pois.RemoveAll(p => roomIds.Contains(p.id));
+    }
 }
