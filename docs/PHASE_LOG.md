@@ -4,6 +4,25 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 10 — Real Ground-Floor Layout from Reference Photos
+**Date:** 2026-10-10
+**Status:** ✅ Complete, Firestore data corrected, not yet re-verified in-Editor after this change
+
+**Built:**
+- 11 reference photos of the real ground floor (CS department) added to `/reference/ground_floor_cs_dept/` (team had no measurements, but did have photos of every room — see knowledge base Section 3, `/reference` purpose). Confirmed via LFS: `*.jpeg` was already tracked in `.gitattributes` from day one, so no config change needed.
+- Photos confirm this is a Cochin University (CUCEK) building and reveal real room numbers/signage: **G4** = Faculty Room-1, **G7** = Lecture Hall, **G8** = Examination Control Room (double-signed as a Conference Room, "Restricted Entry"), Office and Exam Cell share one entrance, Principal's Room (Dr. Preetha Mathew K) sits at the end of the main corridor, lift + aquarium near the main entrance, center staircase separate from the lobby.
+- Corrected the Phase 9 Firestore room layout to match the team's description of the real walking path: entrance → lobby (stairs on the left, lift straight ahead) → corridor forks into a **left wing** (Office, Exam Cell, Classroom 1, Faculty Room-1/G4, Gents Toilet, Ladies Toilet — 6 rooms) and a **right wing** (Principal's Room, Examination Control Room/G8, Classroom 2 "G7 Lecture Hall", Classroom 3 — 4 rooms). Replaces Phase 9's 11-room two-row grid guess (which had the wrong room on the wrong side and an extra classroom) with 10 rooms whose x-coordinate sign now actually means left/right of the corridor fork, not an arbitrary row. Room descriptions now reference real signage instead of generic placeholder text.
+- Positions are still placeholder *distances* (no tape-measure numbers exist), but the left/right structure and which real room is in which wing is now correct per the team's firsthand description.
+
+**Known gaps / flagged, not acted on:**
+- Haven't re-run the in-Editor test since this data change — next session should re-enter `StairsEntrance_ToFloor1` and confirm `loaded 10 room(s) for 'FLOOR_1'` (was 11) and that walking into each wing's rooms still pops up the right popup.
+- Still no real distances between rooms, stairs, or the entrance — only relative left/right order is accurate.
+- Stairs and lift are real, confirmed features of the lobby but aren't represented as Firestore room documents or in-scene objects yet — they're not "rooms" under the current `RoomData` schema, just noted here for whenever navigation/wayfinding around them becomes relevant.
+
+**Next planned task:** re-verify the corrected 10-room layout in-Editor, then same as Phase 9 — Blender exterior blockout or next floor, per team priority.
+
+---
+
 ## Phase 9 — Firestore Link + Ground-Floor Room Data + Room Trigger Spawning
 **Date:** 2026-10-10
 **Status:** ✅ Complete, in-Editor verified, committed on `feature/floor-interior-system` (`1c35b81`, `928fe67`, `3eca209`), not yet pushed
