@@ -4,6 +4,25 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 11 — Electrical Dept (1st Floor) Firestore Data + More Ground-Floor Photos
+**Date:** 2026-10-10
+**Status:** ⚠️ Firestore data only — NOT enterable in-game yet, see gaps below
+
+**Built:**
+- 5 more ground-floor reference photos added to `/reference/ground_floor_cs_dept/` (closer interior shots of the G7 Lecture Hall and Faculty Room-1/G4). Folded the extra detail into those two rooms' Firestore descriptions (desks labelled G7.12/G7.16/G7.17, projector, red curtains; individual faculty desks with computer/printer setups).
+- New `floors/FLOOR_2` Firestore document: `label: "1st Floor — Electrical Department"`, `floorNumber: 2`, `sceneName: "Floor2"`, `isGuaranteed: false` (ground floor already holds the one guaranteed-floor slot per `CLAUDE.md`).
+- 11 `rooms` subdocuments under `floors/FLOOR_2`, per the team's description of the real layout reached by the staircase up from ground floor: **left wing** — Electrical Computer Lab, Faculty Room (Electrical Dept), Classroom 1, Gents Toilet, Ladies Toilet; **right wing** — Electrical Lab 1, Electrical Lab 2, HOD Room 1, HOD Room 2, Classroom 2, Classroom 3. Same placeholder-distance caveat as Phase 10 — no measurements, no photos for this floor yet (team confirmed the `1st floor` reference folder is still empty).
+
+**Known gaps / NOT done — this floor cannot be entered in-game yet:**
+- **No `Floor2.unity` scene exists.** `FloorTransitionManager.EnterFloor()` calls `SceneManager.LoadSceneAsync(floor.sceneName, ...)` — with no scene named `Floor2`, this will fail/log an error the moment something tries to transition there. This is Editor GUI work (File > New Scene, save as `Assets/Scenes/Floor2.unity`), not something addable by data or a script alone.
+- **`Floor2` is not in Build Settings** (File > Build Settings > Scenes In Build) — required for `SceneManager.LoadSceneAsync` to find it at all, in-Editor or in a build.
+- **No stairs trigger exists inside `Floor1` to reach `Floor2`.** The only `StairsTriggerVolume` today lives in `Exterior` and goes `Exterior → Floor1`. Going `Floor1 → Floor2` needs a new trigger placed inside the `Floor1` scene (same component, `direction: EnterFloor`, `floorId: FLOOR_2`), plus a `SpawnPoint` child Transform for where the avatar lands on `Floor2`.
+- **No way back down yet either** — `ExitFloor()` currently always returns to a spawn position back in `Exterior`, it doesn't support floor-to-floor-to-floor stacking. Going from `Floor2` back to `Floor1` (rather than all the way outside) isn't implemented — this needs either a design decision (does leaving Floor2 go to Floor1 or all the way outside?) or an extension to `FloorTransitionManager`.
+
+**Next planned task:** decide the up/down navigation design for 3-level stacking (Exterior ↔ Floor1 ↔ Floor2), then do the Editor-side scene creation and trigger placement to make Floor2 actually reachable. None of this is blocked on more Firestore data — the data is ready and waiting.
+
+---
+
 ## Phase 10 — Real Ground-Floor Layout from Reference Photos
 **Date:** 2026-10-10
 **Status:** ✅ Complete, Firestore data corrected, not yet re-verified in-Editor after this change
