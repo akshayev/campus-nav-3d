@@ -1910,6 +1910,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FloorTransitionManager
   player: {fileID: 742483463}
+  buildingOrigin: {x: 20, y: 0, z: 4}
+  storeyHeight: 4
   floorIndicatorText: {fileID: 0}
 --- !u!4 &1216900547
 Transform:
@@ -1951,7 +1953,7 @@ Transform:
   m_GameObject: {fileID: 1369178063}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2780,7 +2782,7 @@ Transform:
   m_GameObject: {fileID: 1793202390}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 10}
+  m_LocalPosition: {x: 20, y: 0, z: 4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

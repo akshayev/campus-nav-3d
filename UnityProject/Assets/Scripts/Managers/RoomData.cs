@@ -10,7 +10,7 @@ public class RoomData
     public string displayName;
     [TextArea(2, 5)] public string description;
 
-    [Tooltip("Local position on the floor scene's ground, where the room's trigger volume should sit.")]
+    [Tooltip("Position relative to the building origin (FloorTransitionManager.buildingOrigin, the front door) and the floor's own height, so y is normally 0. Where the room's trigger volume should sit.")]
     public Vector3 position;
 
     [Tooltip("Proximity radius (Unity units) at which the room's popup should trigger — same idea as POITriggerVolume's collider size, kept here so it can come from Firestore per room.")]

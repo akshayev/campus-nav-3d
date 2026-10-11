@@ -4,6 +4,29 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 12 — Floor Stacking (Exterior ↔ Floor1 ↔ Floor2)
+**Date:** 2026-10-11
+**Status:** ✅ Editor-verified via Play mode (Exterior → Floor1 → Floor2 → Floor1 → Exterior), not committed
+
+**Built:**
+- Design decision: leaving a floor returns the player to **wherever they were standing before they went up** (not a hand-placed spawn point). A hand-placed "down" spawn would need a Transform reference into a scene that's unloaded, which Unity can't resolve.
+- `FloorTransitionManager`: a `Stack<ReturnPoint>` (scene, floorId, position) is pushed on every `EnterFloor`. `EnterFloor` now unloads the current floor (and its room triggers) before loading the next, so floors stack. `ExitFloor()` (no argument now) pops the stack: back to Exterior, or reloads the previous floor and re-fetches its rooms. Shared cleanup moved into `UnloadCurrentFloorRooms()`.
+- `StairsTriggerVolume`: `spawnPoint` is only required for `EnterFloor`; `ExitFloor` ignores it.
+- `Floor2.unity` created and added to Build Settings. It contains a `StairsDown_ToFloor1` (ExitFloor) trigger.
+- `Floor1.unity` contains `StairsUp_ToFloor2` (EnterFloor, `FLOOR_2`) with child `SpawnPoint_Floor2Entry`, plus a new `StairsDown_ToExterior` (ExitFloor). Both floors have a ground slab and red marker cubes on every stairs trigger (triggers are 3 m wide).
+- **Bug found and fixed in Play-mode testing:** `player.position = ...` was silently undone by the avatar's `CharacterController` (it keeps its own position), so every transition logged "avatar moved" but moved nobody. Added `FloorTransitionManager.TeleportPlayer()`, which disables the controller for the write. Verified: Exterior → Floor1 → Floor2 → Floor1 → Exterior with far-apart spawn points, 10/11/10 rooms loaded as expected.
+- Added a 1.5 s cooldown after each transition so coming down (which lands you inside the stairs trigger you climbed from) doesn't instantly bounce you back.
+- **Floors positioned inside the building:** floor scenes share the Exterior's world coordinates. `FloorTransitionManager` has `buildingOrigin` (20,0,4 = the building's front door, same spot as the Exterior entrance trigger; Firestore room x/z are measured from the door) and `storeyHeight` (4 m); floor N's ground is at y = (N-1)*4. Ground slabs are 90×40 m centred at (20,·,22), covering every room. Firestore room positions are now **relative to the building origin** and shifted to the floor's height (`RoomData.position` tooltip updated). Exterior entrance moved to the south face (20,0,4) with spawn inside (20,1,11); Floor1 exit at (20,1,8); stairs at (14,·,14).
+
+**Known gaps:**
+- Verified in Play mode (Editor driven with `EditorApplication.Step()` since it doesn't tick unfocused): entrance → Floor1 (10 rooms at y=0, z=24, player lands on slab) → Principal's Room popup → stairs → Floor2 (11 rooms at y=4, directly above) → HOD Room 1 popup → down trigger back to Floor1 (no bounce, 10 rooms reloaded) → exit trigger back outside. Slab widths were adjusted after this run and not re-run.
+- All numbers are placeholders: the Blender model isn't imported and the `POI_MainBuilding` cube is only 6×3×6, so it doesn't visually contain the interior. When the model arrives, set `buildingOrigin`/`storeyHeight` to match it.
+- `Packages/packages-lock.json` has an unrelated hash change from Unity: review before committing.
+
+**Next planned task:** walk the loop by hand, then commit.
+
+---
+
 ## Phase 11 — Electrical Dept (1st Floor) Firestore Data + More Ground-Floor Photos
 **Date:** 2026-10-10
 **Status:** ⚠️ Firestore data only — NOT enterable in-game yet, see gaps below
