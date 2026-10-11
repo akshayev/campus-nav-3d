@@ -43,7 +43,10 @@ public class FloorTransitionManager : MonoBehaviour
     // room by a fixed amount so they land inside the building. Set it to (0,0,0) once real
     // door-relative measurements are entered into Firestore.
     [Tooltip("Temporary shift applied to all Firestore room positions. Set to 0,0,0 once real measurements are in Firestore.")]
-    [SerializeField] private Vector3 placeholderRoomOffset = new Vector3(1f, 0f, -11f);
+    [SerializeField] private Vector3 placeholderRoomOffset = new Vector3(1f, 0f, -5.5f);
+
+    [Tooltip("Optional: the main building's outside/inside look (solid shell outside, see-through cutaway inside). Safe to leave empty.")]
+    [SerializeField] private BuildingShell buildingShell;
 
     [Tooltip("Optional: the floor indicator badge text (Step 6). Safe to leave empty for now.")]
     [SerializeField] private TMPro.TextMeshProUGUI floorIndicatorText;
@@ -117,6 +120,14 @@ public class FloorTransitionManager : MonoBehaviour
         }
     }
 
+    private void PlayFloorChangeSound()
+    {
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayFloorChange();
+        }
+    }
+
     private IEnumerator RunTransition(IEnumerator routine)
     {
         transitioning = true;
@@ -144,6 +155,15 @@ public class FloorTransitionManager : MonoBehaviour
 
     private IEnumerator EnterFloorRoutine(FloorData floor, Vector3 spawnPosition)
     {
+        PlayFloorChangeSound();
+
+        // Switch to the see-through inside look first, so the solid walls are gone before the
+        // avatar is moved into the building.
+        if (buildingShell != null)
+        {
+            buildingShell.SetInside(true);
+        }
+
         // Remember where to put the player when they come back down from this floor — right
         // where they're standing right now, on whatever level that is (Exterior or a floor).
         returnStack.Push(new ReturnPoint
@@ -270,6 +290,8 @@ public class FloorTransitionManager : MonoBehaviour
 
     private IEnumerator ExitFloorRoutine()
     {
+        PlayFloorChangeSound();
+
         ReturnPoint target = returnStack.Pop();
 
         yield return UnloadCurrentFloorRooms();
@@ -285,6 +307,11 @@ public class FloorTransitionManager : MonoBehaviour
             if (player != null)
             {
                 TeleportPlayer(target.position);
+            }
+
+            if (buildingShell != null)
+            {
+                buildingShell.SetInside(false);
             }
 
             if (floorIndicatorText != null)

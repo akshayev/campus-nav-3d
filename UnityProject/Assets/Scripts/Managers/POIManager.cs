@@ -101,14 +101,17 @@ public class POIManager : MonoBehaviour
         galleryPhotos.Clear();
         galleryIndex = 0;
 
-        Sprite first = Resources.Load<Sprite>(PhotoFolder + poiId);
+        // The file name the photo(s) are stored under: the room's own id, or a shared name.
+        string photoName = poiId;
+        Sprite first = Resources.Load<Sprite>(PhotoFolder + photoName);
         if (first == null)
         {
             foreach (KeyValuePair<string, string> shared in SharedPhotos)
             {
                 if (poiId.Contains(shared.Key))
                 {
-                    first = Resources.Load<Sprite>(PhotoFolder + shared.Value);
+                    photoName = shared.Value;
+                    first = Resources.Load<Sprite>(PhotoFolder + photoName);
                     break;
                 }
             }
@@ -118,10 +121,11 @@ public class POIManager : MonoBehaviour
         {
             galleryPhotos.Add(first);
 
-            // Extra gallery photos: <id>_2, <id>_3, ... (only for an exact-id photo).
+            // Extra gallery photos: <name>_2, <name>_3, ... (works for a room's own photo and for
+            // shared ones, e.g. shared_classroom, shared_classroom_2, shared_classroom_3).
             for (int n = 2; ; n++)
             {
-                Sprite extra = Resources.Load<Sprite>(PhotoFolder + poiId + "_" + n);
+                Sprite extra = Resources.Load<Sprite>(PhotoFolder + photoName + "_" + n);
                 if (extra == null)
                 {
                     break;
@@ -221,6 +225,11 @@ public class POIManager : MonoBehaviour
         if (popupDescription != null) popupDescription.text = data.description;
         ApplyPhoto(poiId);
         if (popupPanel != null) popupPanel.SetActive(true);
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayUiClick();
+        }
     }
 
     public void HidePOI(string poiId)

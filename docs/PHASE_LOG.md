@@ -4,6 +4,196 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+## Phase 20 — Visible Ceilings, Close Indoor Camera, Visible Front Wall (No More Invisible Walls), Ceiling Lights
+**Date:** 2026-10-12
+**Status:** ✅ Built and Play-mode verified, not committed
+
+**Request:** a ceiling on the ground floor coloured like the "detailed photo", and a visible wall on the side opposite the rooms/classrooms instead of invisible walls.
+
+**Built (both floors):**
+- **Indoor camera:** a visible ceiling can't be seen from the old high camera (and would block it), so inside the building the camera now drops to a close, shoulder-height position (`indoorOffset` (0,1.5,-3.2), `indoorCollisionMask` Default + layer 2 so it can't pass through walls or furniture). Outdoors it stays high. `BuildingShell.SetInside` tells `CampusCameraController.SetIndoor`. A new on-screen **View: Close / Overhead** button (`ViewButton`, under Run) calls `ToggleOverheadView()` to switch to the high overhead view inside (ceiling not visible from there). Camera offset blends over 0.5 s for a smooth swoop through the door.
+- **Ceiling colour** `Mat_Ceiling` = warm off-white (236,232,224) like the photo, now self-lit (emission) so its underside doesn't look dark grey; the one-sided ceiling quad (3.25 m up) from Phase 15 is unchanged.
+- **Ceiling lights:** one-sided glowing panels (`Mat_CeilingLight`): a row along the hall (every 5 m), two in the lobby, one per room.
+- **Visible front (south) wall** `Perimeter_South_West/East` in the hall-wall material, 3.2 m high, with 8 paired windows, a wall piece over the entrance and **solid glass entrance doors** (`Mat_GlassDoor`, dark frame) at x 18.5..21.5 (the way out is still the red exit marker). With the north/east/west perimeter walls from Phase 15, every outer wall is now visible.
+- **Invisible outer wall colliders (`InteriorWalls`) deleted** from both floor scenes. The only hidden colliders left are the box colliders under desk units/teacher desks (they belong to visible furniture).
+
+**Verified in Play mode:** entering drops the camera to (0,1.5,-3.2) in the avatar's frame; hall view down the corridor shows the cream ceiling with light panels, front-wall windows, doors and signs; the avatar is stopped by the south wall (z 4.8), the glass doors (z 4.7), and the west/east walls (x -12.7 / 52.7); the lobby leads north to the rooms; the View button toggles to "Overhead" and the high camera works.
+
+- **Exit marker moved (follow-up):** the Floor1 exit marker (`StairsDown_ToExterior`) is now at (20, 1, 5.4), right inside the glass entrance doors, and smaller: trigger 1.8×3×1.8 m (was 3×3×3 m at z=8), red floor marker 1.6×1.6 m. Verified: walking up to the glass doors unloads Floor1, puts the avatar outside and sets the badge to "Outside".
+
+**Known gaps:**
+- The camera pulls close when there's a wall or furniture behind the avatar (by design); in tight rooms the view can be cramped. Overhead view shows the room layout better but the new front wall partly hides the hall from it.
+- The ceiling emission is a lighting shortcut (no real lights in the building, the sun lights the interior).
+- No ceiling beams, pipes, fans or AC units as in the photo; ceiling lights are flat glowing panels.
+- The saved Sound setting shows "Sound: Off" (stored from earlier testing in PlayerPrefs `audioMuted`): click the button to turn it on.
+
+**Next planned task:** try the indoor camera by hand and tune `indoorOffset` for comfort; faculty/office/exam room details from new photos.
+
+---
+
+## Phase 19 — Normal Walking: Real Walk Speed + Animation Matching, Run Toggle
+**Date:** 2026-10-12
+**Status:** ✅ Built and Play-mode verified (animator states checked), not committed
+
+**Request:** "change the walk also, walk as the normal" (the team chose: better walk animation).
+
+**Cause found:** the AvatarAnimator switches from Walking to **Running above Speed 2.5**, and the avatar moved at 4 m/s, so it was always playing the Running animation, sliding at the wrong pace.
+
+**Changed (`AvatarMovementController`, `AudioManager`):**
+- `moveSpeed` (4) replaced by `walkSpeed` = 2 m/s (Walking animation) and `runSpeed` = 4 m/s (Running animation). Run while **Shift** is held, or with the new on-screen **Run: Off/On** button (`RunButton` on `HUDCanvas`, under the Sound button, calls `ToggleRun()`), because touch screens have no Shift key. Partial joystick pushes walk slower (analog), full push = walk speed.
+- Animation playback speed now follows real movement speed so feet match the ground: `animator.speed = CurrentSpeed / referenceSpeed` (`walkAnimationReferenceSpeed` 1.6 → 1.25× at 2 m/s; `runAnimationReferenceSpeed` 4 → 1.0×). If feet look like they slide, nudge those two Inspector numbers.
+- **Turning on the spot** (TurnAndWalk) plays the Walking animation gently (`turnInPlaceAnimationRate` 0.8) instead of freezing in Idle.
+- **Walking backward** plays the normal walk cycle at the slower backward pace (0.75×). Tried reversing the clip (negative playback), but Unity can't blend transitions at negative speed: the avatar froze in a half-blended Idle pose, so that was removed. No true backward-walk clip exists.
+- Footstep sound spacing `stepDistance` 1.4 → 0.8 m (a footfall every ~0.4 s at walking speed).
+
+**Verified in Play mode (simulated joystick, animator state read back):** standing → idle (rate 1.0); forward → walking, 2.0 m/s, rate 1.25; Run on → running, 4.0 m/s, rate 1.0; backward → walking, 1.2 m/s, rate 0.75; turning on the spot → walking, rate 0.8; released → idle. Root motion is off, so the animation doesn't double-move the avatar.
+
+**Known gaps / notes:**
+- Walking is now 2 m/s (was effectively 4): crossing the 67 m building takes ~34 s walking, ~17 s running. Tune `walkSpeed` / `runSpeed` by feel.
+- Mixamo clips can't be fetched from here: a real turn-in-place or backward-walk animation would need to be downloaded from Mixamo by the team (free) and added to `AvatarAnimator`.
+- Not judged by eye in motion (only screenshots and animator state); the stride/feet-slide tuning numbers are estimates.
+
+**Next planned task:** try it by hand and tune `walkSpeed`, `walkAnimationReferenceSpeed` and `turnSpeed` by feel.
+
+---
+
+## Phase 18 — Camera Turns With the Character (Turn-and-Walk Controls)
+**Date:** 2026-10-12
+**Status:** ✅ Built and Play-mode verified, not committed
+
+**Request:** the camera should turn with the character: turn left and the camera turns left, same for every other direction.
+
+**Built:**
+- `AvatarMovementController`: new **Control Mode** setting. **TurnAndWalk (new default):** left/right on the joystick or A/D turns the avatar on the spot (`turnSpeed` 120°/s), up/down or W/S walks forward/back along the way it faces (backward at 60% speed, `backwardSpeedFactor`). **CameraRelative:** the original behaviour (the pushed direction is the direction walked, camera never turns), kept so it can be switched back in the Inspector. In TurnAndWalk the "face the walking direction" line is skipped so walking backward doesn't flip the avatar.
+- `CampusCameraController`: new **Rotate With Target** (on by default) and **Turn Follow Smooth Time** (0.25 s). The camera offset (0,5,-8) is now measured from the way the avatar faces, so the camera stays 8 units BEHIND it and eases round when it turns (`Mathf.SmoothDampAngle`). Turn it off to get the old fixed-direction camera.
+- Why this doesn't recreate the Phase 5 "feedback loop" bug: movement no longer depends on the camera in TurnAndWalk (the avatar's own facing drives both movement and camera), so there is no steer-by-camera loop.
+
+**Verified in Play mode (simulated joystick):** hold RIGHT for 1 s → avatar turned 139°, camera swung from 0° to 144° and settled directly behind at (0,5,-8) in the avatar's own space; hold FORWARD at 144° → avatar moved along that heading (2.7,-3.8); hold BACK → moved back; hold LEFT → turned back to ~0° with the camera following. Screenshot after a 108° turn: camera behind the avatar looking the new way, the main building on the left of the screen.
+
+**Known gaps / notes:**
+- No strafing (sideways walking) in TurnAndWalk: sideways input only turns. Switch Control Mode to CameraRelative for the old feel.
+- Turning in place plays no walking animation (only idle), by design for now.
+- The camera still gets pulled in by walls/colliders on the Default layer behind the avatar (invisible outer walls, the building body), so turning with your back to a wall shortens the camera distance.
+- Not tested on a phone touch joystick; mouse/touch drag on the joystick sends the same direction values the test used.
+
+**Next planned task:** try it by hand (WASD/joystick) and tune `turnSpeed` and `turnFollowSmoothTime` by feel.
+
+---
+
+## Phase 17 — Real Lobby/Corridor Colours From the Team's "detailed photo"
+**Date:** 2026-10-12
+**Status:** ✅ Applied and checked in Play mode, not committed
+
+**Source:** `detailed photo.jpeg` from the team's `project collage photos` folder: identical to `/reference/ground_floor_cs_dept/groundfloor.jpeg` (already saved), the ground-floor lobby and main corridor. What it shows: a soft off-white ceiling, very pale pink-cream walls (paler than the peach used in rooms), polished dark red-brown granite floor with a thin black inlay line near the walls and a dark granite skirting, very dark brown doors, pale cream pillars with granite bases, and a green EXIT sign at the corridor end. (The photo is dim, so colours were chosen from how the surfaces look, not the raw pixel values.)
+
+**Changed (both floors):**
+- Hall/corridor walls now use `Mat_HallWall` + `wall_hall.png` (pale pink-cream, dark granite skirting with a black inlay line); room walls keep the classroom-photo peach.
+- Granite floor re-textured red-brown and polished (`floor_granite.png`, gloss 0.38, slightly darkened tint) on `Mat_FloorGraniteHall` / `Mat_FloorGraniteLobby`.
+- Ceiling `Mat_Ceiling` now soft off-white (232,230,226). Doors `Mat_DoorLeaf` / `Mat_DoorFrame` now very dark brown.
+- New `HallExtras` group per floor: a thin black inlay line along the corridor wall, two cream pillars with granite bases flanking the lobby opening (solid), and green EXIT signs at both ends of the hall (`Mat_BlackInlay`, `Mat_Pillar`, `Mat_PillarBase`, `Mat_ExitSign`).
+
+**Known gaps:** no wall-mounted pipes/conduits, wall decorations or notice boards, lobby aquarium, or ceiling lights (the ceiling is invisible from the game camera). Colours are eyeballed from one dim photo.
+
+---
+
+## Phase 16 — Realistic Classrooms From the Team's Classroom Photos + Classroom Photo Gallery
+**Date:** 2026-10-12
+**Status:** ✅ Built and Play-mode verified, not committed
+
+**Source:** two classroom photos from the team's `project collage photos` folder (`inside_view_classroom.jpeg`, `inside class room view2.jpeg`; identical to `/reference/ground_floor_cs_dept/classroom_inside_view1/2.jpeg`). What they show: dark wooden desks with thick plank sides and a front panel, a wooden bench with a back rest behind each desk, cream floor tiles, a barred black-framed window with wine-red curtains, a whiteboard on the side wall, a low wooden platform with a plank-top desk and a slatted wooden armchair at the front, peach walls, ceiling fans, tube lights and a ceiling projector.
+
+**Built (classrooms on both floors, `InteriorLayout` rebuilt in `Floor1.unity` / `Floor2.unity`):**
+- **Desk + bench units** (3 rows × 2 per room, with a 1.2 m aisle down the middle): desk top, front panel, two side panels, bench seat, bench legs and a back rest, in dark wood (`Mat_DeskWood`). Each unit has ONE invisible box collider, so the avatar is stopped by the units but the pieces stay simple.
+- **Teacher's platform** (`Mat_PlatformWood`, 0.2 m high: the avatar steps onto it) with a desk (top, front panel, sides) and a wooden armchair (seat, back, arms).
+- **Whiteboard** with a grey frame on the west side wall (`Mat_Whiteboard`, `Mat_BoardFrame`).
+- **Windows on the north wall** of every room except toilets: black frame, glowing "daylight" glass, bars (`Mat_WindowFrame`, `Mat_WindowGlass`); **wine-red curtains** + rod in classrooms (`Mat_Curtain`).
+- Cabinets on the north wall in other rooms moved 0.1 m in so they don't touch the window wall.
+- **Classroom popup photo gallery:** the shared classroom photo is now a 3-photo gallery (`shared_classroom` door view, `shared_classroom_2` inside view 1, `shared_classroom_3` inside view 2). `POIManager` now finds extra `_2`, `_3`, ... photos for shared photos too, not just a room's own photo.
+
+**Verified in Play mode:** overhead and in-game views of the G7 Lecture Hall show the desk rows, platform, whiteboard, window and curtains; the avatar walks up the aisle through the open door to the back and steps onto the platform (y 1.28); desk units block the avatar from both sides; the classroom popup holds the 3 photos (`shared_classroom`, `_2`, `_3`) and shows one in the popup.
+
+**Known gaps:**
+- Ceiling fans, tube lights and the ceiling projector from the photos are NOT modelled: the ceiling is one-sided and invisible from the game camera above, so anything hanging from it would look like it was floating.
+- Desk labels (e.g. "G7.12", "CUCEK WD 202"), the side stand with cables, and wall stains/marks aren't modelled.
+- Layout is still the invented plan; all classrooms (both floors) get the same furniture layout.
+- Other rooms keep the simple box furniture from Phase 15; only classrooms were rebuilt from photos.
+
+**Next planned task:** the same photo-based treatment for the faculty rooms, office and exam rooms (the team has door and entrance photos only, no inside views), or the other buildings.
+
+---
+
+## Phase 15 — Interior Detail: Ceilings, Opening Doors, Furniture, Wall Texture, Room Name Signs
+**Date:** 2026-10-12
+**Status:** ✅ Built and Play-mode verified, not committed
+
+**Built (both floors, `InteriorLayout` in `Floor1.unity` / `Floor2.unity`, rebuilt from scratch):**
+- **Wall texture:** `Assets/Textures/wall_plaster.png` (512 px, drawn by script from the interior photos): mottled peach plaster with a dark granite skirting band at the bottom. Walls are now 3.2 m tall. Visible perimeter walls added on the north, east and west sides (the south/front side stays open to the camera).
+- **Ceilings:** one one-sided quad per floor (`Ceiling`, 3.25 m up, facing down). It shows from inside but is culled when the camera looks down from above, so it never blocks the view. It only shows when the camera is below it.
+- **Doors that open:** `DoorController.cs` (new). Each room has a door leaf on a hinge (`Door_<x>` > `Hinge` > `Leaf`, solid, "Ignore Raycast" layer) and a 3.2×2.6×4.2 m trigger. Walking up swings it open 90° into the room (240°/s) and it closes when the avatar leaves. Soft door sound: `Assets/Audio/door_open.wav` (generated placeholder), `AudioManager.PlayDoor()` / `doorClip` slot.
+- **Furniture** (solid, simple boxes; a 1.2 m aisle is always left down the middle of each room): classrooms (rows of benches, teacher desk, green board), faculty rooms (desks + monitors + cabinet), office (desks, counter, cabinets), exam rooms (long table, cabinets), principal (big desk, chairs, sofa, bookshelf), toilets (stalls + sinks), labs (long tables + monitors), HOD rooms (desk, chair, sofa, cabinet). 43 pieces on Floor1, 42 on Floor2.
+- **Room name signs:** blue plates (`TextMeshPro` 3D text) above every door, in the style of the real "PRINCIPAL G1" sign, e.g. "FACULTY ROOM-1  G4", "ADMINISTRATIVE OFFICE  G2", "G7  LECTURE HALL". Texts come from the room names and the photos' door signs.
+- New materials: `Mat_InteriorWall` (now textured), `Mat_Ceiling`, `Mat_DoorLeaf`, `Mat_FurnitureWood`, `Mat_Cabinet`, `Mat_Blackboard`, `Mat_Screen`, `Mat_Sofa`, `Mat_Stall`, `Mat_Sink`, `Mat_SignBlue`.
+
+**Verified in Play mode:** the Office door is closed when away, swings fully open (−90°) as the avatar steps up, lets the avatar walk through and into the room (to the back wall), and closes after the avatar walks out; furniture and partitions stop the avatar; hall view shows signs above doors on plaster walls; overhead view shows the rooms through the ceiling; classroom view (G7 Lecture Hall) shows benches, aisle, board and door sign. Floor2 checked in the scene: 11 doors, 11 signs, ceiling, 42 furniture pieces.
+
+**Known gaps:**
+- Furniture and signs are simple boxes and flat text: no chairs/legs/detail, no fans or lights, no tile walls in toilets, no whiteboards/notices/posters.
+- Everything is placed from the INVENTED layout (see Phase 14 notes), not real measurements. Sign names for Floor2 follow the Firestore room names, not photos (none exist yet).
+- Test artefact worth knowing: teleporting the avatar with its `CharacterController` switched off skips the trigger-exit event, so a door/popup can stay open after a teleport. Real walking fires the exit normally.
+- The invisible outer wall colliders (Default layer) pull the camera in close when the avatar is near the front of the building.
+- Room popups (photos) still open only inside a room; there's no popup at the door yet.
+
+**Next planned task:** floor 3+ (needs data), or textures for the other buildings, per team priority.
+
+---
+
+## Phase 14 — Main Building Looks Like the Real One (colours, facade, roof) + Interior Walls
+**Date:** 2026-10-11
+**Status:** ✅ Built and Play-mode verified, not committed
+
+**Built:**
+- The main building is now a solid shell in the real colours from the team's photos: salmon-pink walls, deep-red roof (flat slab + a darker cap), blue-teal glass. Facade textures were drawn by a small Python/PIL script from the photos (`Assets/Textures/facade_front|back|side.png`, 2048×536 / 552×536): paired windows in ten bays, pilasters and floor bands, the central glass stairwell and left glass tower (front only), and a dark entrance. Materials `Mat_BuildingWall/Roof/RoofCap`, `Mat_FacadeFront/Back/Side`. Scene object `MainBuilding` > `OutsideShell` (solid `Body` + 4 facade quads + roof) and `InsideCutaway` (the old translucent box).
+- `BuildingShell.cs` (new): `SetInside(bool)` swaps the solid shell for the see-through cutaway. `FloorTransitionManager` calls it: inside **before** the avatar is moved in (so the solid walls can't push it), outside **after** the avatar is back out. The shell's `Body` has a collider, so from outside you can't walk through the walls, only in through the door.
+- Entrance trigger widened from 1×1×1 to 4×3×4 (world x 18..22, z 1..5) and given a visible red marker on the ground in front of the door (`Marker_Entrance`). Main Building popup zone shrunk to x 5..35 so it no longer opens at the spawn point (x=0).
+- **Invisible interior walls** (`InteriorWalls` in `Floor1` and `Floor2`: 4 box colliders just outside the 67×18 m footprint, 4 m tall): the avatar can no longer walk out of the building (or off the edge of the 1st-floor slab) while the shell is hidden.
+
+**Verified in Play mode:** walking onto the door marker enters the building (shell hidden, cutaway shown, avatar stable at the spawn, no push-out); leaving shows the shell again with the avatar outside and the badge "Outside"; pushing the avatar toward each wall on both floors stops it inside the footprint (ground floor z 4.6/21.4, x -12.9/52.9; 1st floor same at y 4.6).
+
+**Known gaps:**
+- It's a box with painted-on windows and a flat roof, not a model: no real sloped tile roof, no recessed top floors, no arched ground-floor windows, no porch or glass tower depth. The real Blender model replaces all of it.
+- The other buildings are still plain grey-blue boxes.
+- Only the front/back/side faces are textured; the roof has no tile texture.
+- (Interior walls between rooms now exist, see the next bullet block; the room plan itself is invented, below.)
+- **Interior layout and colours (2026-10-11):** both floors now have a layout built from the real room x-positions, in the colours of the team's interior photos. Each floor scene has an `InteriorLayout` group: a dark granite hall along the front (z 4..11, `Mat_FloorGraniteHall`), a peach corridor wall at z=11 (`Mat_InteriorWall`) with a door gap at every room and a 5 m lobby opening at x 18.5..23.5, partition walls between rooms (rooms z 11..22), brown door frames (`Mat_DoorFrame`), a cream-tile slab (`Mat_FloorTile`, 0.6 m tiles) and a granite lobby alcove. Textures drawn by script: `Assets/Textures/floor_tile.png`, `floor_granite.png` (256 px). Walls are 3 m tall and on the "Ignore Raycast" layer: the avatar collides with them but the camera's collision check ignores them. The stairs moved into the lobby (21, y, 17); the 1st-floor arrival spawn is (21, 4.6, 13.5). `placeholderRoomOffset` is now (1,0,-5.5), so room triggers sit in the north room row (z=18.5) and you only get a room's popup by walking through its door. Verified in Play mode: the avatar walks through door gaps and the lobby gap and is stopped by blank wall sections and partitions on both floors; stairs up/down work from the lobby; 10 and 11 rooms load.
+- **The interior plan is an INVENTED layout** that only follows the placeholder room x-positions (no real floor plan or measurements): one row of equal-sized rooms, a single hall, and the same plan on both floors. Real room shapes, corridor widths and the real stairwell and lift positions need the team's measurements or sketches. Floor1's east end (x 43.5..53.5) is an unused closed room; Floor2 has an extra closed room at x -13.5..-8.5.
+- No ceilings (the camera looks down from above), no doors that open, no furniture, no wall texture (flat peach colour), no room name signs.
+
+**Next planned task:** Floor3 (2nd floor) Unity side + Firestore doc, or textures for the other buildings, per team priority.
+
+---
+
+## Phase 13 — AudioManager: Footsteps, UI Click, Floor Chime, Ambience, Mute (FR-14)
+**Date:** 2026-10-11
+**Status:** ✅ Built and Play-mode verified (by state checks; sound itself not listened to), not committed
+
+**Built:**
+- `AudioManager.cs` (new, singleton, lives in Exterior as the `AudioManager` GameObject): footsteps while the avatar is walking on the ground (one step every `stepDistance` = 1.4 m, so faster walking = faster steps, with slight random pitch/volume), a UI click, a floor-change chime, and a quiet looping ambience. Two `AudioSource`s are created in code, so the only Editor setup is the four clip slots.
+- Hooks: `POIManager.ShowPOI` plays the click when a popup opens; `FloorTransitionManager` plays the chime at the start of `EnterFloorRoutine` / `ExitFloorRoutine`. Both null-check `AudioManager.Instance`, so scenes without it still work.
+- **Sound: On/Off button** (`SoundButton` on `HUDCanvas`, top-right) calls `AudioManager.ToggleMute()`: sets `AudioListener.volume` to 0/1, updates its label, and remembers the choice in `PlayerPrefs` (`audioMuted`). `HUDCanvas` now has a `GraphicRaycaster` so the button is clickable (the floor badge ignores clicks, so it still doesn't block the joystick).
+- **Placeholder sounds** generated by a small Python script (no downloads, no licences, zero cost): `Assets/Audio/footstep.wav`, `ui_click.wav`, `floor_change.wav`, `ambience.wav` (10 s loop). Imported mono/Vorbis: effects Decompress On Load, ambience Compressed In Memory. To use better sounds later, drag other clips onto the same slots on the `AudioManager` object, no code change. `.wav` is already LFS-tracked.
+
+**Verified in Play mode:** ambience starts by itself and loops; popup open and floor change both start the effects source; holding the joystick forward fires footsteps every ~0.36 s (14 steps in ~4.7 s, matching 1.4 m / 4 m/s); clicking the Sound button gives volume 0 + "Sound: Off" + pref 1, and clicking again restores volume 1 + "Sound: On" + pref 0.
+
+**Known gaps:**
+- Nobody has listened to the sounds yet. They are simple synthesized placeholders (soft thud, blip, two-note chime, wind-like noise) and will sound basic; levels may need tuning by ear (`Volumes` on `AudioManager`).
+- Not tested in a WebGL build in a browser: browsers keep sound off until the first click/tap, which Unity handles, but confirm in the browser.
+- Footsteps are the same on every surface (no different sound on tile vs grass).
+- No separate volume slider, only on/off.
+
+**Next planned task:** listen to it in the Editor (Game view, speakers on) and tune volumes; then GitHub Issues for the remaining work.
+
+---
+
 ## Phase 12 — Floor Stacking (Exterior ↔ Floor1 ↔ Floor2)
 **Date:** 2026-10-11
 **Status:** ✅ Editor-verified via Play mode (Exterior → Floor1 → Floor2 → Floor1 → Exterior), not committed
