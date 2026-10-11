@@ -61,6 +61,8 @@ public class CampusCameraController : MonoBehaviour
 
     // If something solid sits between the target and where the camera wants to be, move the
     // camera to just in front of that obstacle instead of letting it pass through it.
+    // Trigger colliders (stairs, room and POI volumes) are invisible and walk-through, so they
+    // are ignored: otherwise a trigger box between us and the camera pulls the camera in close.
     private Vector3 ResolveCameraCollision(Vector3 fromTarget, Vector3 desiredCameraPosition)
     {
         Vector3 direction = desiredCameraPosition - fromTarget;
@@ -71,7 +73,7 @@ public class CampusCameraController : MonoBehaviour
             return desiredCameraPosition;
         }
 
-        if (Physics.Raycast(fromTarget, direction.normalized, out RaycastHit hit, desiredDistance, collisionMask))
+        if (Physics.Raycast(fromTarget, direction.normalized, out RaycastHit hit, desiredDistance, collisionMask, QueryTriggerInteraction.Ignore))
         {
             float safeDistance = Mathf.Max(hit.distance - collisionBuffer, 0.1f);
             return fromTarget + direction.normalized * safeDistance;
