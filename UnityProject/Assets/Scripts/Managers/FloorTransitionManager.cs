@@ -35,7 +35,15 @@ public class FloorTransitionManager : MonoBehaviour
     [SerializeField] private Vector3 buildingOrigin = new Vector3(20f, 0f, 4f);
 
     [Tooltip("Height of one storey in metres. Floor N's ground sits at (N-1) * this above the building origin.")]
-    [SerializeField] private float storeyHeight = 4f;
+    [SerializeField] private float storeyHeight = 3.5f;
+
+    // TEMPORARY. The placeholder room positions in Firestore (x about -30..20, z = 20) were
+    // invented before the building's real size was known, and z = 20 now falls outside the
+    // building (which is 18 m deep). Rather than edit ~21 Firestore documents, this shifts every
+    // room by a fixed amount so they land inside the building. Set it to (0,0,0) once real
+    // door-relative measurements are entered into Firestore.
+    [Tooltip("Temporary shift applied to all Firestore room positions. Set to 0,0,0 once real measurements are in Firestore.")]
+    [SerializeField] private Vector3 placeholderRoomOffset = new Vector3(1f, 0f, -11f);
 
     [Tooltip("Optional: the floor indicator badge text (Step 6). Safe to leave empty for now.")]
     [SerializeField] private TMPro.TextMeshProUGUI floorIndicatorText;
@@ -192,7 +200,7 @@ public class FloorTransitionManager : MonoBehaviour
     {
         // Room positions are local to the building, so shift them to world space and up to
         // this floor's height.
-        Vector3 floorOrigin = buildingOrigin + Vector3.up * ((floor != null ? floor.floorNumber - 1 : 0) * storeyHeight);
+        Vector3 floorOrigin = buildingOrigin + placeholderRoomOffset + Vector3.up * ((floor != null ? floor.floorNumber - 1 : 0) * storeyHeight);
 
         foreach (RoomData room in rooms)
         {
