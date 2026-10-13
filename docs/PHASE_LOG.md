@@ -4,6 +4,39 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+### Phase 21b: photos applied to the ground floor in Unity (2026-10-14)
+- New RoomPhotos imported as Sprites (1024, no mipmaps).
+- Floor1: Office + Exam Cell merged into one room (partition at x=13.5 removed, both doors kept), reception counters, desks/chairs/monitors, olive cupboards, whiteboard, third window, lilac ceiling + beam.
+- Principal's room rebuilt: blue-grey ceiling, red-top desk under a zebra-blind window, 12 maroon armchairs, trophy cabinet, steel cupboard, List of Principals board, floral sofa/armchairs, coffee table, AC, curtains.
+- Toilets tiled (violet band, pale tiles, light-blue floor), windows, 3 urinals with dividers (gents), cream stall doors.
+- Corridor: pale pink walls, coral entrance hall, Placement notice board case, hanging PRINCIPAL and EXIT signs, water cooler, Electrical Panel Room G3 door.
+- Ceiling detail: corridor ceiling panel + 13 cross beams, ceiling fans and fluorescent tubes in every room.
+- Shapes are simple boxes. Walked in Play mode (principal, office, gents); not yet walked in Play mode; Floor2 untouched. Uncommitted.
+
+## Phase 21 — New Photos Organised (Principal, Office/Exam Cell, Toilets, Corridors, Entrance Hall)
+**Date:** 2026-10-13
+**Status:** ⚠️ Files copied and documented only: NOT yet applied in Unity (the UnityMCP link was down), not committed
+
+**Received (17 new photos in `project collage photos`, plus 1 exact duplicate skipped):** Principal's room inside (4 + ceiling), Office inside (3), Exam Cell door, 3 corridor shots, the entrance hall (main door), toilets front view and 3 inside views.
+
+**Done:**
+- All originals saved in `/reference/ground_floor_cs_dept/` with clear names, plus `PHOTO_NOTES.md` describing what they show (colours, layout, fittings).
+- Popup photos added to `Assets/Resources/RoomPhotos/` using the existing gallery naming (`<roomId>`, `_2`, `_3`, ...): `room_principal` (door + 3 inside), `room_office` (door + 3), `room_exam_cell` (door + door view + 2 office inside views, since the Exam Cell is the second section of the same room), `room_gents_toilet` (5: door, front view, urinals, 2 inside), `room_ladies_toilet` (3: front view with the LADIES TOILET sign first, 2 inside; the old corridor shot stays only in `/reference`). Total photos in that folder: 29, 4.5 MB source.
+- **Still to do in the Editor:** the new files import as plain textures; they must be set to Texture Type = Sprite, Max Size 1024 before the popups can show them (same one-line importer script as before).
+
+**Findings that change the interior (to build next, once Unity is reachable):**
+- Ceilings are not white everywhere: **Principal's room and Office are painted pale blue-grey / lavender**; the corridor is off-white/pale grey with square LED panels.
+- Walls: corridor **pale pink**; entrance hall **coral/salmon**; Principal's room **cream**; Office peach-pink with a yellow-cream far end; toilets tiled (blue band, pale upper tiles).
+- Floors: corridor/hall polished **red-brown granite with black inlay stripes**; Principal's room pale grey-cream tile; Office cream tile; toilets light-blue tile.
+- **Office and Exam Cell are ONE room with two doors**: the partition between x=11 and x=16 (at x=13.5) should go, leaving a single large room (x 8.5..18.5) with both doors.
+- Principal's room has rows of maroon wooden armchairs (not a sofa-only layout), a red-top desk under a zebra-blind window, a trophy cabinet, a wooden `LIST OF PRINCIPALS` board, floral sofa and armchairs, and a wall AC.
+- Toilets: blue-band tiled walls, light-blue tile floor, cream stall doors, 2 basins, 3 urinals with dividers (gents), barred window.
+- Corridor extras: wooden `PLACEMENT & TRAINING NOTICE BOARD` case, blue pin boards, hanging `PRINCIPAL / Dr. PREETHA MATHEW K` sign, hanging EXIT sign, water cooler at the end.
+
+**Next planned task:** reconnect UnityMCP (Unity: Window → MCP for Unity → Start Server), import the new photos as sprites, then apply the findings above to both floors where they apply (ground floor first).
+
+---
+
 ## Phase 20 — Visible Ceilings, Close Indoor Camera, Visible Front Wall (No More Invisible Walls), Ceiling Lights
 **Date:** 2026-10-12
 **Status:** ✅ Built and Play-mode verified, not committed
