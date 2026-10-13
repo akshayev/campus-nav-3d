@@ -45,6 +45,33 @@ public class FloorTransitionManager : MonoBehaviour
     [Tooltip("Temporary shift applied to all Firestore room positions. Set to 0,0,0 once real measurements are in Firestore.")]
     [SerializeField] private Vector3 placeholderRoomOffset = new Vector3(1f, 0f, -5.5f);
 
+    // TEMPORARY, ground floor only. The ground-floor layout now follows the team's hand sketch
+    // (rooms on both sides of the corridor), so the Firestore room positions no longer match the
+    // 3D rooms. These WORLD positions replace the Firestore ones for Floor 1 until the Firestore
+    // documents are updated. Delete this list once they are.
+    [System.Serializable]
+    private class RoomPlacement
+    {
+        public string roomId;
+        public Vector3 worldPosition;
+        public float radius;
+    }
+
+    [Tooltip("Ground floor only: where each room's popup trigger really is (world position) and how far away it fires. Replaces the Firestore position until Firestore is updated.")]
+    [SerializeField] private RoomPlacement[] groundFloorPlacements =
+    {
+        new RoomPlacement { roomId = "room_principal",    worldPosition = new Vector3(-5f, 0f, 6.7f),   radius = 3f },
+        new RoomPlacement { roomId = "room_exam_control", worldPosition = new Vector3(10f, 0f, 6.7f),   radius = 3f },
+        new RoomPlacement { roomId = "room_classroom3",   worldPosition = new Vector3(29f, 0f, 6.7f),   radius = 3f },
+        new RoomPlacement { roomId = "room_classroom2",   worldPosition = new Vector3(44f, 0f, 6.7f),   radius = 3.5f },
+        new RoomPlacement { roomId = "room_office",       worldPosition = new Vector3(-5f, 0f, 19.3f),  radius = 3f },
+        new RoomPlacement { roomId = "room_exam_cell",    worldPosition = new Vector3(10f, 0f, 19.3f),  radius = 3f },
+        new RoomPlacement { roomId = "room_faculty1",     worldPosition = new Vector3(26.75f, 0f, 19.3f), radius = 2.5f },
+        new RoomPlacement { roomId = "room_classroom1",   worldPosition = new Vector3(33f, 0f, 19.3f),  radius = 2.5f },
+        new RoomPlacement { roomId = "room_gents_toilet", worldPosition = new Vector3(40.5f, 0f, 19.3f), radius = 2.5f },
+        new RoomPlacement { roomId = "room_ladies_toilet", worldPosition = new Vector3(49f, 0f, 19.3f), radius = 2.5f },
+    };
+
     [Tooltip("Optional: the main building's outside/inside look (solid shell outside, see-through cutaway inside). Safe to leave empty.")]
     [SerializeField] private BuildingShell buildingShell;
 
@@ -226,10 +253,25 @@ public class FloorTransitionManager : MonoBehaviour
         {
             GameObject trigger = new GameObject($"RoomTrigger_{room.roomId}");
             trigger.transform.position = floorOrigin + room.position;
+            float radius = room.poiRadius;
+
+            // Ground floor: use the sketch-based placement instead of the Firestore position.
+            if (floor != null && floor.floorNumber == 1 && groundFloorPlacements != null)
+            {
+                foreach (RoomPlacement placement in groundFloorPlacements)
+                {
+                    if (placement.roomId == room.roomId)
+                    {
+                        trigger.transform.position = placement.worldPosition;
+                        radius = placement.radius;
+                        break;
+                    }
+                }
+            }
 
             BoxCollider collider = trigger.AddComponent<BoxCollider>();
             collider.isTrigger = true;
-            float size = room.poiRadius * 2f;
+            float size = radius * 2f;
             collider.size = new Vector3(size, size, size);
 
             RoomTriggerVolume volume = trigger.AddComponent<RoomTriggerVolume>();

@@ -4,6 +4,17 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+### Phase 22: ground floor rebuilt from the hand sketch (2026-10-14)
+Source: `reference/ground_floor_cs_dept/sketch_floor_plan_upright.jpeg` (+ notes in `PHOTO_NOTES.md`). The team also said: add one faculty room and one classroom between the Gents toilet and the Exam Cell; the sketch is the ground floor only (Floor2 unchanged).
+- **New Floor1 layout** (rooms on BOTH sides of a 7.3 m corridor, entrance vestibule in the middle of the south wall):
+  - South row (z 4.2-9.2, next to the entrance): Principal (x -13.3..3), Examination Control G8 (3..17.5), [entrance vestibule 17.5..23, coral walls], Classroom 3 (23..35), G7 Lecture Hall (35..53.3).
+  - North row (z 16.8-21.8): Office + Exam Cell as ONE room with two doors (x -13.3..18), stairs bay (18..23.5) with the Electrical Panel Room G3 door, Faculty Room-1 (23.5..30), Classroom 1 (30..36), Gents (36..45), Ladies (45..53.3).
+- Rebuilt from scratch under `InteriorLayout`: `Shell` (walls, partitions, door frames), `Doors` (cloned opening doors, hinge flipped for south rooms), `Rooms_South`, `Rooms_North`, `Toilets_Corridor`, `Ceilings` (per-room ceiling colours, beams, fans, tubes). Room furniture follows the photos (Principal: maroon armchairs, red desk, blind, sofa; Office: counters, desks, olive cupboards; classrooms: desk rows facing the board; toilets tiled with fittings).
+- Floor materials re-tiled for the new areas (`Mat_F1Hall`, `Mat_F1Lobby`, `Mat_F1Vestibule`).
+- **Room popup triggers:** Firestore still holds the OLD positions (Firebase MCP is offline), so `FloorTransitionManager` got a TEMPORARY `groundFloorPlacements` list (world positions + radius per room id) that overrides Firestore for Floor 1. Delete it once Firestore is updated.
+- **Firestore text now wrong:** the Principal popup says "right wing ... end of the main corridor", Exam Cell says "left wing" etc. Needs updating with the Firestore data.
+- Verified in Play mode: walked in through the main door, into the Principal's room (popup + photo) and the merged Office/Exam Cell (popup). Camera sits close to the wall in these 5 m deep rooms. Not tested: other rooms, stairs to Floor2 from the new bay, WebGL build.
+
 ### Phase 21b: photos applied to the ground floor in Unity (2026-10-14)
 - New RoomPhotos imported as Sprites (1024, no mipmaps).
 - Floor1: Office + Exam Cell merged into one room (partition at x=13.5 removed, both doors kept), reception counters, desks/chairs/monitors, olive cupboards, whiteboard, third window, lilac ceiling + beam.

@@ -31,3 +31,11 @@ Photos: `toilets_front_view_gents_and_ladies`, `toilet_inside_1`, `_2`, `_3_urin
 
 ## Classrooms (see also the earlier classroom photos)
 Dark wood desks with a front panel and attached back-rest benches, cream tile floor, red curtains on a barred window, whiteboard on the side wall, a low wooden platform with a plank desk and a slatted armchair at the front.
+
+## Hand sketch of the ground-floor plan (`sketch_floor_plan_upright.jpeg`, uploaded 2026-10-14)
+The original photo (`sketch_floor_plan_original.jpeg`) is turned sideways; the `_upright` copy is rotated to read normally. Plan view, standing at the **main building entrance** (bottom of the sketch) looking into the building. Not to scale.
+- **Entrance side (near the main door):** left of the entrance, in order from the far left: **Principal room**, **Exam Control room** (with a door note), then the **entrance door**; right of the entrance: **Classroom**, **Classroom 2**.
+- **Far side (opposite the entrance):** top-left: **Office** and **Exam Cell** (side by side); top-right: **Gents toilet** then **Ladies toilet** at the far right end.
+- Between the two rows is a wide open middle (corridor/hall); the top row has an open gap between the Exam Cell and the Gents toilet.
+- "Left side" = left of the entrance, "right side" = right of the entrance.
+- Not in the sketch: Faculty rooms, G7 Lecture Hall, Electrical Panel Room G3, lobby/stairs/lift.
