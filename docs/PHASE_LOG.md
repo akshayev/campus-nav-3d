@@ -4,6 +4,50 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+### Phase 22: ground floor rebuilt from the hand sketch (2026-10-14)
+Source: `reference/ground_floor_cs_dept/sketch_floor_plan_upright.jpeg` (+ notes in `PHOTO_NOTES.md`). The team also said: add one faculty room and one classroom between the Gents toilet and the Exam Cell; the sketch is the ground floor only (Floor2 unchanged).
+- **New Floor1 layout** (rooms on BOTH sides of a 7.3 m corridor, entrance vestibule in the middle of the south wall):
+  - South row (z 4.2-9.2, next to the entrance): Principal (x -13.3..3), Examination Control G8 (3..17.5), [entrance vestibule 17.5..23, coral walls], Classroom 3 (23..35), G7 Lecture Hall (35..53.3).
+  - North row (z 16.8-21.8): Office + Exam Cell as ONE room with two doors (x -13.3..18), stairs bay (18..23.5) with the Electrical Panel Room G3 door, Faculty Room-1 (23.5..30), Classroom 1 (30..36), Gents (36..45), Ladies (45..53.3).
+- Rebuilt from scratch under `InteriorLayout`: `Shell` (walls, partitions, door frames), `Doors` (cloned opening doors, hinge flipped for south rooms), `Rooms_South`, `Rooms_North`, `Toilets_Corridor`, `Ceilings` (per-room ceiling colours, beams, fans, tubes). Room furniture follows the photos (Principal: maroon armchairs, red desk, blind, sofa; Office: counters, desks, olive cupboards; classrooms: desk rows facing the board; toilets tiled with fittings).
+- Floor materials re-tiled for the new areas (`Mat_F1Hall`, `Mat_F1Lobby`, `Mat_F1Vestibule`).
+- **Room popup triggers:** Firestore still holds the OLD positions (Firebase MCP is offline), so `FloorTransitionManager` got a TEMPORARY `groundFloorPlacements` list (world positions + radius per room id) that overrides Firestore for Floor 1. Delete it once Firestore is updated.
+- **Firestore text now wrong:** the Principal popup says "right wing ... end of the main corridor", Exam Cell says "left wing" etc. Needs updating with the Firestore data.
+- Verified in Play mode: walked in through the main door, into the Principal's room (popup + photo) and the merged Office/Exam Cell (popup). Camera sits close to the wall in these 5 m deep rooms. Not tested: other rooms, stairs to Floor2 from the new bay, WebGL build.
+
+### Phase 21b: photos applied to the ground floor in Unity (2026-10-14)
+- New RoomPhotos imported as Sprites (1024, no mipmaps).
+- Floor1: Office + Exam Cell merged into one room (partition at x=13.5 removed, both doors kept), reception counters, desks/chairs/monitors, olive cupboards, whiteboard, third window, lilac ceiling + beam.
+- Principal's room rebuilt: blue-grey ceiling, red-top desk under a zebra-blind window, 12 maroon armchairs, trophy cabinet, steel cupboard, List of Principals board, floral sofa/armchairs, coffee table, AC, curtains.
+- Toilets tiled (violet band, pale tiles, light-blue floor), windows, 3 urinals with dividers (gents), cream stall doors.
+- Corridor: pale pink walls, coral entrance hall, Placement notice board case, hanging PRINCIPAL and EXIT signs, water cooler, Electrical Panel Room G3 door.
+- Ceiling detail: corridor ceiling panel + 13 cross beams, ceiling fans and fluorescent tubes in every room.
+- Shapes are simple boxes. Walked in Play mode (principal, office, gents); not yet walked in Play mode; Floor2 untouched. Uncommitted.
+
+## Phase 21 — New Photos Organised (Principal, Office/Exam Cell, Toilets, Corridors, Entrance Hall)
+**Date:** 2026-10-13
+**Status:** ⚠️ Files copied and documented only: NOT yet applied in Unity (the UnityMCP link was down), not committed
+
+**Received (17 new photos in `project collage photos`, plus 1 exact duplicate skipped):** Principal's room inside (4 + ceiling), Office inside (3), Exam Cell door, 3 corridor shots, the entrance hall (main door), toilets front view and 3 inside views.
+
+**Done:**
+- All originals saved in `/reference/ground_floor_cs_dept/` with clear names, plus `PHOTO_NOTES.md` describing what they show (colours, layout, fittings).
+- Popup photos added to `Assets/Resources/RoomPhotos/` using the existing gallery naming (`<roomId>`, `_2`, `_3`, ...): `room_principal` (door + 3 inside), `room_office` (door + 3), `room_exam_cell` (door + door view + 2 office inside views, since the Exam Cell is the second section of the same room), `room_gents_toilet` (5: door, front view, urinals, 2 inside), `room_ladies_toilet` (3: front view with the LADIES TOILET sign first, 2 inside; the old corridor shot stays only in `/reference`). Total photos in that folder: 29, 4.5 MB source.
+- **Still to do in the Editor:** the new files import as plain textures; they must be set to Texture Type = Sprite, Max Size 1024 before the popups can show them (same one-line importer script as before).
+
+**Findings that change the interior (to build next, once Unity is reachable):**
+- Ceilings are not white everywhere: **Principal's room and Office are painted pale blue-grey / lavender**; the corridor is off-white/pale grey with square LED panels.
+- Walls: corridor **pale pink**; entrance hall **coral/salmon**; Principal's room **cream**; Office peach-pink with a yellow-cream far end; toilets tiled (blue band, pale upper tiles).
+- Floors: corridor/hall polished **red-brown granite with black inlay stripes**; Principal's room pale grey-cream tile; Office cream tile; toilets light-blue tile.
+- **Office and Exam Cell are ONE room with two doors**: the partition between x=11 and x=16 (at x=13.5) should go, leaving a single large room (x 8.5..18.5) with both doors.
+- Principal's room has rows of maroon wooden armchairs (not a sofa-only layout), a red-top desk under a zebra-blind window, a trophy cabinet, a wooden `LIST OF PRINCIPALS` board, floral sofa and armchairs, and a wall AC.
+- Toilets: blue-band tiled walls, light-blue tile floor, cream stall doors, 2 basins, 3 urinals with dividers (gents), barred window.
+- Corridor extras: wooden `PLACEMENT & TRAINING NOTICE BOARD` case, blue pin boards, hanging `PRINCIPAL / Dr. PREETHA MATHEW K` sign, hanging EXIT sign, water cooler at the end.
+
+**Next planned task:** reconnect UnityMCP (Unity: Window → MCP for Unity → Start Server), import the new photos as sprites, then apply the findings above to both floors where they apply (ground floor first).
+
+---
+
 ## Phase 20 — Visible Ceilings, Close Indoor Camera, Visible Front Wall (No More Invisible Walls), Ceiling Lights
 **Date:** 2026-10-12
 **Status:** ✅ Built and Play-mode verified, not committed
