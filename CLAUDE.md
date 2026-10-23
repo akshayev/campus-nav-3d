@@ -16,9 +16,9 @@ A Unity WebGL (primary) / Android (secondary) app letting a user walk a 3D avata
 - **Engine:** Unity 6 LTS (6000.6.0f1 installed). Do not suggest or require a different version.
 - **Build targets:** WebGL is primary and must always work. Android is secondary/best-effort — don't let Android-specific work block WebGL progress.
 - **Backend:** Firebase Firestore, free Spark plan. No paid Firebase features.
-- **Budget: zero.** Never suggest a paid Unity Asset Store package, paid plugin, or paid service. Free/open-source only (Mixamo free characters, Unity Asset Store free tier, free Blender).
+- **Budget: zero.** Never suggest a paid Unity Asset Store package, paid plugin, or paid service. Free/open-source only (free CC0 characters, Unity Asset Store free tier, free Blender).
 - **Version control:** Git + Git LFS. Any new binary asset type (models, textures, audio, video) must be added to `.gitattributes` LFS tracking, not committed raw.
-  - **Exception:** the Mixamo character `.fbx` files in `Assets/Models/Characters/` and their extracted `.png` textures in `Assets/Models/Characters/Textures/` are deliberately gitignored (too big for the free LFS quota) and shared via drive; only `.meta` files and the small `.mat` files are committed. Don't "fix" this by committing them. See knowledge base Section 4.
+  - Characters are the free Quaternius Universal Base Characters (Standard, CC0), about 8 MB, committed normally through Git LFS and credited in docs/ASSET_CREDITS.md. Mixamo is no longer used for characters; the Idle/Walking/Running clips in Assets/Models/Animations are still Mixamo.
 - Never commit Firebase credentials (`google-services.json`, service account keys, etc.) — these must stay out of git per `.gitignore`.
 
 ## Current scope (see docs/PROJECT_KNOWLEDGE_BASE.md Section 3 for full detail)
@@ -58,5 +58,5 @@ Use this to verify a WebGL build still succeeds after changes, rather than assum
 - Outdoor GPS navigation to the physical campus
 - Multiplayer/social/networked features
 - Voice interaction
-- Custom-modeled (non-Mixamo) characters
+- Custom-modeled characters (use free ready-made ones)
 - Any building/block beyond the main building + MCA block

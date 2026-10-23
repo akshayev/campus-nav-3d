@@ -4,6 +4,19 @@ Running record of every implementation session with Claude Code. Newest entry on
 
 ---
 
+### Character swap: Mixamo to Quaternius CC0 (2026-10-23)
+Status: complete and committed locally on feature/free-characters (not pushed).
+- Replaced men.fbx / women.fbx (Mixamo, gitignored, not on every machine) with Quaternius "Universal Base Characters (Standard)": Character_Male/Female.fbx + Hair_Male/Female.fbx (Humanoid) + Eyes/Body/Hair textures and materials. About 7.7 MB via Git LFS. Licence CC0 1.0 (see docs/ASSET_CREDITS.md).
+- MaleAvatar/FemaleAvatar prefabs rebuilt (unpacked, about 2,733 lines each) on the new models with the same AvatarAnimator.controller; spawner references updated in Exterior.unity. No dangling GUIDs. Idle/Walking/Running clips still Humanoid.
+- Removed 28 obsolete tracked files (old Ch08/Ch26 materials and .meta). .gitignore no longer ignores Characters/*.fbx and Textures/*.png.
+- Verified: WebGL batch build Succeeded, 21.1 MB (1 splash-screen cache message, not a content error). Automated browser smoke test passed (see the Verified list above); human Unity Play-mode check pending before push.
+- Risks: prefabs are unpacked and will conflict if two people edit them; Mixamo animation clips in a public repo (see KB Section 6); Unity version mismatch still unresolved (6000.3.24f1 in use vs 6000.6.0f1 in docs).
+- Risks (found by the smoke test, NOT caused by the swap): BUG-001 avatar turns invisible when pressed against the main building front (Facade_Front slab z 3.47-4.47 has no collider; Body collider starts at z=4.0; not confirmed in the Editor). UX-001 AvatarSelect buttons are both labelled 'Button'.
+### Repo audit and first WebGL build (2026-10-22)
+- Read-only audit: main in sync with origin (00d26e2); 4 scenes in Build Settings; 18 scripts + BuildScript; Firestore via REST; no credential files tracked.
+- First batch WebGL build on 6000.3.24f1: Succeeded, 0 compile errors (the logged "1 error" was an internal Unity API-updater cache message), 19 MB. That run deleted 18 tracked .meta files because the Mixamo files were missing; fixed by this swap.
+- Not checked then: browser run, Firestore live data.
+
 ### Phase 22: ground floor rebuilt from the hand sketch (2026-10-14)
 Source: `reference/ground_floor_cs_dept/sketch_floor_plan_upright.jpeg` (+ notes in `PHOTO_NOTES.md`). The team also said: add one faculty room and one classroom between the Gents toilet and the Exam Cell; the sketch is the ground floor only (Floor2 unchanged).
 - **New Floor1 layout** (rooms on BOTH sides of a 7.3 m corridor, entrance vestibule in the middle of the south wall):
