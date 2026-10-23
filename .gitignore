@@ -40,6 +40,17 @@ Thumbs.db
 # (Characters: the old Mixamo files were gitignored because they were too big for the free
 # LFS quota. The replacement Quaternius characters are ~1 MB each, so they are committed
 # normally; *.fbx and *.png already go through Git LFS via .gitattributes.)
+# Teammates may still have the OLD Mixamo files on disk (men.fbx 87 MB, women.fbx 56 MB, Ch08_*/Ch26_*
+# textures). Ignore exactly those names so a stray `git add .` can never push ~140 MB into the free
+# LFS quota. Deliberately narrow: the new Quaternius files in the same folders stay trackable.
+UnityProject/Assets/Models/Characters/men.fbx
+UnityProject/Assets/Models/Characters/men.fbx.meta
+UnityProject/Assets/Models/Characters/women.fbx
+UnityProject/Assets/Models/Characters/women.fbx.meta
+UnityProject/Assets/Models/Characters/Ch08_*
+UnityProject/Assets/Models/Characters/Ch26_*
+UnityProject/Assets/Models/Characters/Textures/Ch08_*
+UnityProject/Assets/Models/Characters/Textures/Ch26_*
 
 # Testing
 coverage/
