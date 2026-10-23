@@ -2,7 +2,7 @@
 
 **Course:** 23-204-0713 Mini Project (Multimedia Project), CUSAT B.Tech IT
 **Institution:** Cochin University College of Engineering Kuttanad (CUCEK)
-**Last updated:** 2026-10-07
+**Last updated:** 2026-10-23
 
 > This is a **living document**. Every confirmed decision goes here. If it's not written down here, treat it as undecided — do not assume. Re-upload/reference this file at the start of every new session so nothing gets lost.
 
@@ -53,7 +53,7 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 - **Interior:** full walkable floors, room-to-room, across **all 5 floors** — this is the stated target.
   - **Risk-managed fallback (agreed approach):** guarantee **one fully detailed, fully walkable floor** (e.g. the IT department's floor) as the reliable deliverable; treat full detail on floors 2–5 as a stretch goal that expands as time allows, rather than an all-or-nothing requirement.
 - **Audio:** basic ambient sound, footsteps, and UI click sounds are in core scope (satisfies course CO3).
-- **Avatars:** free ready-made humanoid characters (Mixamo / Unity Asset Store), male & female, NOT custom-modeled from scratch.
+- **Avatars:** free ready-made humanoid characters (Quaternius CC0; Mixamo animation clips), male & female, NOT custom-modeled.
 
 ### Data collection needed (team action items, not yet done)
 - **No official campus map/site plan exists** — exterior building positions will be approximated from team knowledge/observation, not a formal survey.
@@ -63,7 +63,7 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 - Outdoor GPS navigation to the physical campus
 - Multiplayer/social features
 - Voice interaction
-- Custom-modeled (non-Mixamo) characters
+- Custom-modeled characters (use free ready-made ones)
 - Any paid assets (zero budget — free/open-source only)
 
 ---
@@ -73,15 +73,7 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 - **Backend:** Firebase Firestore (not Realtime DB) — see SDD for schema collections: exteriorPOIs, floors, floors/{floorId}/rooms (see SDD Section 3).
 - **Deployment priority:** **WebGL is primary** (easier live demo). Android APK is secondary/best-effort.
 - **Budget:** **zero** — free assets and free-tier services only (Firebase Spark plan, free Unity Asset Store items, free Mixamo).
-- **Character models are NOT in git** (decided 2026-09-27). The Mixamo avatars `men.fbx` (Ch08, 87 MB) and `women.fbx` (Ch26, 56 MB) together would eat most of GitHub's free Git LFS allowance (1 GB storage / 1 GB bandwidth per month) on the first few clones. So:
-  - The `.fbx` files in `UnityProject/Assets/Models/Characters/` are gitignored and shared via a team shared drive instead.
-  - Their `.meta` files **are** committed — they hold the Humanoid rig settings and the asset GUIDs that prefabs reference, so dropping the `.fbx` into that folder reconnects everything automatically.
-  - Animation-only clips (`Assets/Models/Animations/*.fbx`, under 1 MB each) stay in git via LFS as normal.
-  - Whoever runs a WebGL build must have both character files locally.
-- **Extracted character textures are also NOT in git** (decided 2026-09-28, same reasoning). Fixing the "plain white" material problem (see below) required extracting each character's embedded textures to `UnityProject/Assets/Models/Characters/Textures/`, which totaled ~132 MB across 16 files (individual normal maps up to 24 MB). Same treatment as the `.fbx` files:
-  - The `.png` files are gitignored and shared via the same team drive as `men.fbx`/`women.fbx`.
-  - Their `.meta` files **are** committed, along with the small `.mat` material files that reference them by GUID — dropping the shared `.png` files into that exact folder lets Unity reuse the existing `.meta` ID instead of generating a new one, so the materials reconnect automatically instead of showing missing-texture pink.
-  - **Mixamo import note:** Mixamo's embedded FBX materials don't always link their textures automatically on import (shows as plain white, not pink). Fix: select the character FBX → Inspector → **Materials** tab → **Extract Textures...** then **Extract Materials...**. Needed once per character, on each teammate's machine, after they drop in the shared `.fbx`/`.png` files.
+- **Characters** (decided 2026-10-23, replaces the 2026-09-27/28 'not in git' decisions): Quaternius Universal Base Characters (Standard), one male and one female plus separate hair meshes, Humanoid rig, CC0 1.0. Small (about 1 MB per model, about 1.5 MB per texture, about 7.7 MB total), committed normally via Git LFS; no shared drive or manual texture extraction needed. Credits: docs/ASSET_CREDITS.md. Mixamo is no longer used for characters.
 - **No NavMesh / no NavMeshAgent** (decided 2026-10-10, re-confirming the implicit Phase 2 choice). The avatar stays on `CharacterController` with plain Unity colliders (boundary walls, and building geometry once it exists) for movement and collision — this is already built and verified (Phase 7). Switching to a `NavMeshAgent`-driven avatar later would be a real rework of `AvatarMovementController`'s movement model, not an addition, so it's being treated as a closed decision rather than revisited per-phase. "NavMesh" in the original Week 1 issue list / Section 5 plan is superseded by this — see the Week 2 row above, now "collision-constrained movement".
 
 ---
@@ -107,6 +99,7 @@ The original SRS (Increment 1) assumed a whole-campus navigation experience. **T
 - Which floor is the "guaranteed fully detailed" floor (suggest: IT department floor, since that's the team's own department — but not yet confirmed).
 - Whether Android build is attempted this cycle or deferred entirely.
 - **Unity version conflict, unresolved:** the committed `UnityProject/ProjectSettings/ProjectVersion.txt` currently says `6000.3.24f1` (last set in commit `0773af1`), but this document (Section 2/8) and `CLAUDE.md` both say `6000.6.0f1`. Nobody has picked one yet — do not change either the project file or the docs until the team agrees, since flip-flopping the Editor version churns `ProjectVersion.txt`/`packages-lock.json` every time.
+- **Mixamo licence:** Adobe's Mixamo FAQ prohibits free distribution of raw character/animation files (team sharing is allowed). The three Mixamo animation FBX clips are committed in this repo; decide whether to make the repo private or replace them with CC0 clips.
 
 ---
 
