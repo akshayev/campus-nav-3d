@@ -37,7 +37,7 @@ public static class EXT03_BikeShed
     const bool BackWall = false;       // true = add the low mural wall along the back long edge (-z side)
 
     // Extra settings (not in the original brief, kept here so nothing is hidden in the code below).
-    const float FloorThickness = 0.04f;  // floor slab thickness; it is visual only (no collider)
+    const float FloorThickness = 0.02f;  // floor slab thickness; it is visual only (no collider)
     const float BeamHeight = 0.30f;      // steel side beam: height ...
     const float BeamThickness = 0.20f;   // ... and thickness
     const float EdgeInset = 0.30f;       // poles and beams sit this far inside the roof's long edge
@@ -48,14 +48,23 @@ public static class EXT03_BikeShed
     const float FadeMargin = 1.0f;       // roof hides this far outside the footprint (see ShedRoofFader)
 
     // Colours read off the reference photos (0-255 RGB).
-    static readonly Color32 RoofTopColor = new Color32(150, 165, 180, 255);
+    // Colour tune: the scene's bright lighting adds roughly (+38, +50, +60) to every colour on screen, so
+    // these shed colours are DARKER (and more saturated) than the colours you want to see in-game. They
+    // were chosen so the in-game result matches the reference photos (floor red ~190,88,62; charcoal
+    // pavers ~88,80,70; roof top ~118,132,140). Old values: roof top 150,165,180; floor red 170,62,45;
+    // floor black 55,56,60; smoothness roof 0.35, floors 0.15.
+    static readonly Color32 RoofTopColor = new Color32(86, 92, 84, 255);
     static readonly Color32 RoofUnderColor = new Color32(225, 220, 205, 255);
     static readonly Color32 FasciaColor = new Color32(70, 72, 78, 255);
     static readonly Color32 SteelColor = new Color32(150, 155, 160, 255);
-    static readonly Color32 FloorRedColor = new Color32(170, 62, 45, 255);
-    static readonly Color32 FloorBlackColor = new Color32(55, 56, 60, 255);
+    static readonly Color32 FloorRedColor = new Color32(152, 34, 4, 255);
+    static readonly Color32 FloorBlackColor = new Color32(46, 27, 12, 255);
     static readonly Color32 LineColor = new Color32(230, 200, 90, 255);
     static readonly Color32 WallColor = new Color32(205, 205, 210, 255); // plain stand-in for the painted mural
+
+    // How shiny the main surfaces are (0 = matte). Matte surfaces do not mirror the bright sky.
+    const float RoofTopSmoothness = 0.10f;
+    const float FloorSmoothness = 0.0f;
 
     // ------------------------------------------------------------------------------------
     // Where things are saved / what things are called.
@@ -140,12 +149,12 @@ public static class EXT03_BikeShed
         EnsureFolder("Assets/Materials", "Sites");
         EnsureFolder("Assets/Models", "Generated");
 
-        Material roofTop = GetMaterial("RoofTop", RoofTopColor, 0.35f);
+        Material roofTop = GetMaterial("RoofTop", RoofTopColor, RoofTopSmoothness);
         Material roofUnder = GetMaterial("RoofUnder", RoofUnderColor, 0.1f);
         Material fascia = GetMaterial("Fascia", FasciaColor, 0.2f);
         Material steel = GetMaterial("Steel", SteelColor, 0.3f);
-        Material floorRed = GetMaterial("FloorRed", FloorRedColor, 0.15f);
-        Material floorBlack = GetMaterial("FloorBlack", FloorBlackColor, 0.15f);
+        Material floorRed = GetMaterial("FloorRed", FloorRedColor, FloorSmoothness);
+        Material floorBlack = GetMaterial("FloorBlack", FloorBlackColor, FloorSmoothness);
         Material lines = GetMaterial("Lines", LineColor, 0.1f);
         Material wall = wallOn ? GetMaterial("MuralWall", WallColor, 0.1f) : null;
 
@@ -234,10 +243,16 @@ public static class EXT03_BikeShed
                 new Vector3(Length, WallHeight, WallThickness), wall, false);
         }
 
-        // 5. The roof fader: hides the Roof group while the Player is under the shed.
+        // 5. The roof fader: hides the Roof (plus Fascia and Beams) while the Player is under the shed or the roof is in the camera's way.
         var fader = model.gameObject.AddComponent<ShedRoofFader>();
         var serialized = new SerializedObject(fader);
         serialized.FindProperty("roofGroup").objectReferenceValue = roofGroup;
+        // The fascia band and side beams hang from the roof edge and block the camera's view just as the
+        // roof does, so they are hidden and shown together with it.
+        SerializedProperty alsoHide = serialized.FindProperty("alsoHide");
+        alsoHide.arraySize = 2;
+        alsoHide.GetArrayElementAtIndex(0).objectReferenceValue = fasciaGroup;
+        alsoHide.GetArrayElementAtIndex(1).objectReferenceValue = beamGroup;
         serialized.FindProperty("footprintHalfSize").vector2Value = new Vector2(Length / 2f, Depth / 2f);
         serialized.FindProperty("margin").floatValue = FadeMargin;
         serialized.ApplyModifiedPropertiesWithoutUndo();
