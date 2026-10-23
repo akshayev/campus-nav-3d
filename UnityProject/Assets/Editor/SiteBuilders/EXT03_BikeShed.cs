@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // Builds the EXT03 bike shed "blockout" model (simple shapes, no textures) in Exterior.unity.
 //
@@ -18,6 +18,9 @@ using UnityEngine;
 // EXT03_BikeShed). Its position, its POITriggerVolume and its trigger collider (poiId bike_shed)
 // are left exactly as they are. This file lives in an "Editor" folder, so it is never part of the
 // game build.
+//
+// The steps every site builder shares (opening the scene, finding the site object, making materials,
+// groups and shapes, saving) are in SiteBuilderUtil.cs; this file only says what the bike shed looks like.
 public static class EXT03_BikeShed
 {
     // ------------------------------------------------------------------------------------
@@ -69,8 +72,6 @@ public static class EXT03_BikeShed
     // ------------------------------------------------------------------------------------
     // Where things are saved / what things are called.
     // ------------------------------------------------------------------------------------
-    const string ScenePath = "Assets/Scenes/Exterior.unity";
-    const string MaterialFolder = "Assets/Materials/Sites";
     const string MeshFolder = "Assets/Models/Generated";
     const string RoofMeshPath = MeshFolder + "/EXT03_RoofVault.asset";
     const string RootName = "EXT03_BikeShed";
@@ -80,18 +81,7 @@ public static class EXT03_BikeShed
     [MenuItem("Campus/Build EXT03 BikeShed")]
     public static void Build()
     {
-        try
-        {
-            BuildInternal();
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("EXT03_BikeShed: build FAILED: " + e);
-            if (Application.isBatchMode)
-            {
-                EditorApplication.Exit(1);
-            }
-        }
+        SiteBuilderUtil.Run("EXT03_BikeShed", BuildInternal);
     }
 
     static void BuildInternal()
@@ -108,46 +98,21 @@ public static class EXT03_BikeShed
             throw new System.Exception("Check the constants: PolesPerSide and RoofSegments must be at least 2, and Length, Depth and CrownRise must be above 0.");
         }
 
-        // In the Editor, offer to save anything unsaved first. (Batch mode has nothing to save.)
-        if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        Scene scene;
+        if (!SiteBuilderUtil.TryOpenExteriorScene(out scene))
         {
             return;
         }
 
-        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-
         // 1. Find the shed object: it is called POI_BikeShed the first time, EXT03_BikeShed after that.
-        GameObject root = null;
-        foreach (GameObject candidate in scene.GetRootGameObjects())
-        {
-            if (candidate.name == RootName || candidate.name == OldRootName)
-            {
-                if (root != null)
-                {
-                    throw new System.Exception("Found more than one shed root (" + RootName + " / " + OldRootName + "). Fix the scene by hand first.");
-                }
-                root = candidate;
-            }
-        }
-        if (root == null)
-        {
-            throw new System.Exception("Could not find '" + OldRootName + "' or '" + RootName + "' at the top level of Exterior.unity.");
-        }
-        root.name = RootName;
+        GameObject root = SiteBuilderUtil.FindAndRenameRoot(scene, RootName, OldRootName);
 
         // 2. Delete the old placeholder cube and any previous model, so a re-run starts clean.
-        for (int i = root.transform.childCount - 1; i >= 0; i--)
-        {
-            Transform child = root.transform.GetChild(i);
-            if (child.name == "Cube" || child.name == ModelName)
-            {
-                Object.DestroyImmediate(child.gameObject);
-            }
-        }
+        SiteBuilderUtil.DeleteChildren(root, "Cube", ModelName);
 
         // 3. Materials and the generated roof mesh (saved as assets).
-        EnsureFolder("Assets/Materials", "Sites");
-        EnsureFolder("Assets/Models", "Generated");
+        SiteBuilderUtil.EnsureFolder("Assets/Materials", "Sites");
+        SiteBuilderUtil.EnsureFolder("Assets/Models", "Generated");
 
         Material roofTop = GetMaterial("RoofTop", RoofTopColor, RoofTopSmoothness);
         Material roofUnder = GetMaterial("RoofUnder", RoofUnderColor, 0.1f);
@@ -162,21 +127,19 @@ public static class EXT03_BikeShed
 
         // 4. The model. The root sits at y = 1 in the scene, so the model is lowered by the root's
         //    height: that puts the floor's underside at world y = 0 (the ground).
-        var model = new GameObject(ModelName).transform;
-        model.SetParent(root.transform, false);
-        model.localPosition = new Vector3(0f, -root.transform.position.y, 0f);
+        Transform model = SiteBuilderUtil.CreateModel(root, ModelName);
 
         float floorTop = FloorThickness;
 
         // Roof: one generated mesh with two materials (light blue-grey on top, cream underneath).
-        Transform roofGroup = Group(model, "Roof");
+        Transform roofGroup = SiteBuilderUtil.Group(model, "Roof");
         var roofObject = new GameObject("Roof_Vault");
         roofObject.transform.SetParent(roofGroup, false);
         roofObject.AddComponent<MeshFilter>().sharedMesh = roofMesh;
         roofObject.AddComponent<MeshRenderer>().sharedMaterials = new[] { roofTop, roofUnder };
 
         // Poles: the only parts with colliders, so the avatar cannot walk through them.
-        Transform poleGroup = Group(model, "Poles");
+        Transform poleGroup = SiteBuilderUtil.Group(model, "Poles");
         float edgeZ = Depth / 2f - EdgeInset;
         float beamCenterY = EaveHeight - 0.45f;
         float poleHeight = beamCenterY - floorTop;
@@ -190,26 +153,26 @@ public static class EXT03_BikeShed
                 float t = PolesPerSide == 1 ? 0.5f : (float)i / (PolesPerSide - 1);
                 float x = Mathf.Lerp(-Length / 2f + poleInset, Length / 2f - poleInset, t);
                 // Unity's Cylinder is 2 m tall and 1 m wide, so scale y by height / 2 and x/z by the diameter.
-                Part(poleGroup, "Pole_" + sideName + "_" + (i + 1).ToString("00"), PrimitiveType.Cylinder,
+                SiteBuilderUtil.Part(poleGroup, "Pole_" + sideName + "_" + (i + 1).ToString("00"), PrimitiveType.Cylinder,
                     new Vector3(x, floorTop + poleHeight / 2f, z),
                     new Vector3(PoleRadius * 2f, poleHeight / 2f, PoleRadius * 2f), steel, true);
             }
         }
 
         // Beams: light grey steel running along each long edge, just under the roof.
-        Transform beamGroup = Group(model, "Beams");
-        Part(beamGroup, "Beam_Front", PrimitiveType.Cube, new Vector3(0f, beamCenterY, edgeZ), new Vector3(Length, BeamHeight, BeamThickness), steel, false);
-        Part(beamGroup, "Beam_Back", PrimitiveType.Cube, new Vector3(0f, beamCenterY, -edgeZ), new Vector3(Length, BeamHeight, BeamThickness), steel, false);
+        Transform beamGroup = SiteBuilderUtil.Group(model, "Beams");
+        SiteBuilderUtil.Part(beamGroup, "Beam_Front", PrimitiveType.Cube, new Vector3(0f, beamCenterY, edgeZ), new Vector3(Length, BeamHeight, BeamThickness), steel, false);
+        SiteBuilderUtil.Part(beamGroup, "Beam_Back", PrimitiveType.Cube, new Vector3(0f, beamCenterY, -edgeZ), new Vector3(Length, BeamHeight, BeamThickness), steel, false);
 
         // Fascia: the dark band along both long roof edges, hanging down from the eave.
-        Transform fasciaGroup = Group(model, "Fascia");
+        Transform fasciaGroup = SiteBuilderUtil.Group(model, "Fascia");
         float fasciaY = EaveHeight - FasciaHeight / 2f + 0.05f;
-        Part(fasciaGroup, "Fascia_Front", PrimitiveType.Cube, new Vector3(0f, fasciaY, Depth / 2f), new Vector3(Length, FasciaHeight, 0.08f), fascia, false);
-        Part(fasciaGroup, "Fascia_Back", PrimitiveType.Cube, new Vector3(0f, fasciaY, -Depth / 2f), new Vector3(Length, FasciaHeight, 0.08f), fascia, false);
+        SiteBuilderUtil.Part(fasciaGroup, "Fascia_Front", PrimitiveType.Cube, new Vector3(0f, fasciaY, Depth / 2f), new Vector3(Length, FasciaHeight, 0.08f), fascia, false);
+        SiteBuilderUtil.Part(fasciaGroup, "Fascia_Back", PrimitiveType.Cube, new Vector3(0f, fasciaY, -Depth / 2f), new Vector3(Length, FasciaHeight, 0.08f), fascia, false);
 
         // Floor: separate paver bands across the width (alternating black / red) so no two
         // surfaces overlap. Visual only: the avatar walks on the ground plane underneath.
-        Transform floorGroup = Group(model, "Floor");
+        Transform floorGroup = SiteBuilderUtil.Group(model, "Floor");
         float floorLength = Length + 2f * FloorMargin;
         float floorWidth = Depth + 2f * FloorMargin;
         int bandCount = Mathf.CeilToInt(floorWidth / FloorBandWidth);
@@ -217,7 +180,7 @@ public static class EXT03_BikeShed
         {
             float zStart = -floorWidth / 2f + i * FloorBandWidth;
             float zEnd = Mathf.Min(zStart + FloorBandWidth, floorWidth / 2f);
-            Part(floorGroup, "Floor_Band_" + (i + 1).ToString("00"), PrimitiveType.Cube,
+            SiteBuilderUtil.Part(floorGroup, "Floor_Band_" + (i + 1).ToString("00"), PrimitiveType.Cube,
                 new Vector3(0f, FloorThickness / 2f, (zStart + zEnd) / 2f),
                 new Vector3(floorLength, FloorThickness, zEnd - zStart),
                 i % 2 == 0 ? floorBlack : floorRed, false);
@@ -225,11 +188,11 @@ public static class EXT03_BikeShed
 
         // Yellow lines: two bay lines along the length (one parking row along each long edge,
         // an aisle in the middle) and one arrow near each end of the aisle, pointing along +x.
-        Transform lineGroup = Group(model, "Lines");
+        Transform lineGroup = SiteBuilderUtil.Group(model, "Lines");
         float lineY = floorTop + 0.005f;
         float lineZ = Depth / 2f - BayDepth;
-        Part(lineGroup, "Line_Bay_Front", PrimitiveType.Cube, new Vector3(0f, lineY, lineZ), new Vector3(Length - 1f, 0.01f, LineWidth), lines, false);
-        Part(lineGroup, "Line_Bay_Back", PrimitiveType.Cube, new Vector3(0f, lineY, -lineZ), new Vector3(Length - 1f, 0.01f, LineWidth), lines, false);
+        SiteBuilderUtil.Part(lineGroup, "Line_Bay_Front", PrimitiveType.Cube, new Vector3(0f, lineY, lineZ), new Vector3(Length - 1f, 0.01f, LineWidth), lines, false);
+        SiteBuilderUtil.Part(lineGroup, "Line_Bay_Back", PrimitiveType.Cube, new Vector3(0f, lineY, -lineZ), new Vector3(Length - 1f, 0.01f, LineWidth), lines, false);
         BuildArrow(lineGroup, "Arrow_West", -Length / 2f + 2.5f, lineY, lines);
         BuildArrow(lineGroup, "Arrow_East", Length / 2f - 2.5f, lineY, lines);
 
@@ -237,8 +200,8 @@ public static class EXT03_BikeShed
         // it has no collider.
         if (wallOn)
         {
-            Transform wallGroup = Group(model, "Wall");
-            Part(wallGroup, "Wall_Back", PrimitiveType.Cube,
+            Transform wallGroup = SiteBuilderUtil.Group(model, "Wall");
+            SiteBuilderUtil.Part(wallGroup, "Wall_Back", PrimitiveType.Cube,
                 new Vector3(0f, WallHeight / 2f, -(Depth / 2f - 0.1f)),
                 new Vector3(Length, WallHeight, WallThickness), wall, false);
         }
@@ -257,42 +220,16 @@ public static class EXT03_BikeShed
         serialized.FindProperty("margin").floatValue = FadeMargin;
         serialized.ApplyModifiedPropertiesWithoutUndo();
 
-        // 6. Save everything.
-        EditorSceneManager.MarkSceneDirty(scene);
-        EditorSceneManager.SaveScene(scene);
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+        // 6. Save everything. (Count first: in the Editor the scene is reloaded after the save.)
+        int objectCount = SiteBuilderUtil.CountObjects(root);
+        SiteBuilderUtil.SaveSceneAndAssets(scene);
 
-        int objectCount = root.GetComponentsInChildren<Transform>(true).Length;
         Debug.Log("EXT03_BikeShed: built OK. '" + RootName + "' now has " + objectCount + " objects (root + children). Scene saved.");
     }
 
     // ------------------------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------------------------
-
-    static Transform Group(Transform parent, string name)
-    {
-        var group = new GameObject(name).transform;
-        group.SetParent(parent, false);
-        return group;
-    }
-
-    // Makes one named shape. Every primitive comes with a collider; we remove it unless asked to keep it.
-    static GameObject Part(Transform parent, string name, PrimitiveType type, Vector3 localPosition, Vector3 localScale, Material material, bool keepCollider)
-    {
-        GameObject part = GameObject.CreatePrimitive(type);
-        part.name = name;
-        part.transform.SetParent(parent, false);
-        part.transform.localPosition = localPosition;
-        part.transform.localScale = localScale;
-        part.GetComponent<Renderer>().sharedMaterial = material;
-        if (!keepCollider)
-        {
-            Object.DestroyImmediate(part.GetComponent<Collider>());
-        }
-        return part;
-    }
 
     // A painted arrow on the aisle floor pointing along +x: a shaft plus two angled head bars.
     static void BuildArrow(Transform parent, string name, float xCenter, float y, Material material)
@@ -302,42 +239,21 @@ public static class EXT03_BikeShed
         const float headAngle = 35f;
         float tipX = xCenter + shaftLength / 2f;
 
-        Part(parent, name + "_Shaft", PrimitiveType.Cube, new Vector3(xCenter, y, 0f), new Vector3(shaftLength, 0.01f, LineWidth), material, false);
+        SiteBuilderUtil.Part(parent, name + "_Shaft", PrimitiveType.Cube, new Vector3(xCenter, y, 0f), new Vector3(shaftLength, 0.01f, LineWidth), material, false);
 
         float a = headAngle * Mathf.Deg2Rad;
         float dx = -Mathf.Cos(a) * headLength / 2f;
         float dz = Mathf.Sin(a) * headLength / 2f;
-        GameObject left = Part(parent, name + "_HeadLeft", PrimitiveType.Cube, new Vector3(tipX + dx, y, dz), new Vector3(headLength, 0.01f, LineWidth), material, false);
+        GameObject left = SiteBuilderUtil.Part(parent, name + "_HeadLeft", PrimitiveType.Cube, new Vector3(tipX + dx, y, dz), new Vector3(headLength, 0.01f, LineWidth), material, false);
         left.transform.localRotation = Quaternion.Euler(0f, headAngle, 0f);
-        GameObject right = Part(parent, name + "_HeadRight", PrimitiveType.Cube, new Vector3(tipX + dx, y, -dz), new Vector3(headLength, 0.01f, LineWidth), material, false);
+        GameObject right = SiteBuilderUtil.Part(parent, name + "_HeadRight", PrimitiveType.Cube, new Vector3(tipX + dx, y, -dz), new Vector3(headLength, 0.01f, LineWidth), material, false);
         right.transform.localRotation = Quaternion.Euler(0f, -headAngle, 0f);
     }
 
-    static void EnsureFolder(string parent, string folderName)
-    {
-        if (!AssetDatabase.IsValidFolder(parent + "/" + folderName))
-        {
-            AssetDatabase.CreateFolder(parent, folderName);
-        }
-    }
-
-    // Loads Assets/Materials/Sites/EXT03_<name>.mat, or creates it. Same Standard shader as the
-    // project's other materials, no textures. An existing material is updated in place (same file,
-    // same GUID), so re-running never churns the .meta files.
+    // Loads Assets/Materials/Sites/EXT03_<name>.mat, or creates it (see SiteBuilderUtil.GetMaterial).
     static Material GetMaterial(string name, Color32 color, float smoothness)
     {
-        string path = MaterialFolder + "/EXT03_" + name + ".mat";
-        Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
-        if (material == null)
-        {
-            material = new Material(Shader.Find("Standard"));
-            AssetDatabase.CreateAsset(material, path);
-        }
-        material.color = color;
-        material.SetFloat("_Glossiness", smoothness);
-        material.SetFloat("_Metallic", 0f);
-        EditorUtility.SetDirty(material);
-        return material;
+        return SiteBuilderUtil.GetMaterial("EXT03", name, color, smoothness);
     }
 
     // ------------------------------------------------------------------------------------

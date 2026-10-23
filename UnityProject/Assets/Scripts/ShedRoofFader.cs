@@ -19,8 +19,9 @@ using UnityEngine;
 // after nothing has wanted it hidden for a short time (showDelaySeconds), so it can't blink on and off
 // when the camera line brushes the edge of the box.
 //
-// The footprint size is filled in by the builder script (Assets/Editor/SiteBuilders/EXT03_BikeShed.cs)
-// from its Length and Depth constants, so resizing the shed there also resizes this zone. The overhead
+// The footprint size is filled in by the builder script (Assets/Editor/SiteBuilders/EXT03_BikeShed.cs, or
+// EXT04_CarShed.cs for the car shed canopy) from its size constants, so resizing the shed there also
+// resizes this zone. The overhead
 // parts' bounding box is measured once in Start(), so the shed is assumed not to move while the game runs.
 public class ShedRoofFader : MonoBehaviour
 {
@@ -32,6 +33,9 @@ public class ShedRoofFader : MonoBehaviour
 
     [Tooltip("Half of the shed's footprint (x = half the length, y = half the depth), in metres. Set by the builder script.")]
     [SerializeField] private Vector2 footprintHalfSize = new Vector2(10.5f, 4f);
+
+    [Tooltip("Where the footprint's centre is, in metres from this object (x, then z). (0, 0) = centred on this object, which is right for the bike shed. A shed that is not centred on its object (the car shed canopy) gets its offset from the builder script.")]
+    [SerializeField] private Vector2 footprintCenter = Vector2.zero;
 
     [Tooltip("Extra metres around the footprint where the roof is already hidden, so it vanishes just before the avatar walks in.")]
     [SerializeField] private float margin = 1f;
@@ -154,8 +158,8 @@ public class ShedRoofFader : MonoBehaviour
     private bool PlayerIsUnderShed()
     {
         Vector3 local = transform.InverseTransformPoint(player.position);
-        return Mathf.Abs(local.x) <= footprintHalfSize.x + margin
-            && Mathf.Abs(local.z) <= footprintHalfSize.y + margin;
+        return Mathf.Abs(local.x - footprintCenter.x) <= footprintHalfSize.x + margin
+            && Mathf.Abs(local.z - footprintCenter.y) <= footprintHalfSize.y + margin;
     }
 
     // Case 2: does the segment from the camera to the Player pass through the overhead parts' box?
