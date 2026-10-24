@@ -193,6 +193,9 @@ public static class EXT04_CarShed
             carBrown = Mat("CarBrown", CarBrownColor, CarSmoothness),
             carBlue = Mat("CarBlue", CarBlueColor, CarSmoothness),
             carGrey = Mat("CarGrey", CarGreyColor, CarSmoothness),
+            tyre = Mat("Tyre", new Color32(30, 30, 32, 255), 0.05f),
+            headlight = Mat("Headlight", new Color32(235, 235, 220, 255), 0.4f),
+            taillight = Mat("Taillight", new Color32(190, 30, 30, 255), 0.3f),
         };
 
         // 4. The model. The root sits at y = 1 in the scene, so the model is lowered by the root's height:
@@ -233,7 +236,7 @@ public static class EXT04_CarShed
     {
         public Material roofTop, roofUnder, steel, blockWall, plinth, blockRoof, windowFrame, glass, shutter;
         public Material paverBase, paverRed, paverDark, gravel, brick;
-        public Material carWhite, carBlack, carBrown, carBlue, carGrey;
+        public Material carWhite, carBlack, carBrown, carBlue, carGrey, tyre, headlight, taillight;
     }
 
     // ------------------------------------------------------------------------------------
@@ -420,7 +423,7 @@ public static class EXT04_CarShed
     }
 
     // ------------------------------------------------------------------------------------
-    // Cars: simple box cars (body + darker cabin) parked nose-in toward the wall, one per occupied bay.
+    // Cars: simple low-poly cars (body, glass cabin, roof, wheels, lights, bumpers) parked nose-in toward the wall, one per occupied bay.
     // Each car has one box collider on its root.
     // ------------------------------------------------------------------------------------
     static void BuildCars(Transform model, Materials m, float wallZ)
@@ -446,13 +449,53 @@ public static class EXT04_CarShed
             car.localPosition = new Vector3(x, 0f, centerZ);
             car.gameObject.layer = CameraPassThroughLayer;
 
+            Material paint = colours[CarColourIndex[i]];
+            const float lowerBody = 0.6f;     // height of the lower body (above the ground clearance)
+            const float roofThickness = 0.07f;
+            float cabinHeight = CarBodyHeight + CarCabinHeight - lowerBody - roofThickness;
+            float wheelRadius = 0.32f;
+            float halfLength = CarLength / 2f;
+
+            // Lower body, with a slightly narrower bonnet end and boot end (a car is not one box).
             SiteBuilderUtil.Part(car, "Body", PrimitiveType.Cube,
-                new Vector3(0f, bodyBottom + CarBodyHeight / 2f, 0f),
-                new Vector3(CarWidth, CarBodyHeight, CarLength), colours[CarColourIndex[i]], false);
-            // The cabin sits a little toward the rear (+z), like a hatchback parked nose-in.
+                new Vector3(0f, bodyBottom + lowerBody / 2f, 0f), new Vector3(CarWidth, lowerBody, CarLength), paint, false);
+            // Glass cabin toward the rear (+z) and a coloured roof on top, so it reads as a car with windows.
+            float cabinZ = 0.25f;
             SiteBuilderUtil.Part(car, "Cabin", PrimitiveType.Cube,
-                new Vector3(0f, bodyBottom + CarBodyHeight + CarCabinHeight / 2f, 0.15f),
-                new Vector3(CarWidth - 0.15f, CarCabinHeight, CarCabinLength), m.glass, false);
+                new Vector3(0f, bodyBottom + lowerBody + cabinHeight / 2f, cabinZ), new Vector3(CarWidth - 0.2f, cabinHeight, CarCabinLength - 0.3f), m.glass, false);
+            SiteBuilderUtil.Part(car, "Roof", PrimitiveType.Cube,
+                new Vector3(0f, bodyBottom + lowerBody + cabinHeight + roofThickness / 2f, cabinZ), new Vector3(CarWidth - 0.1f, roofThickness, CarCabinLength - 0.1f), paint, false);
+            // Slanted windscreen and rear window: glass panels leaning from the cabin down to the bonnet and boot.
+            SiteBuilderUtil.Part(car, "Windscreen", PrimitiveType.Cube,
+                new Vector3(0f, bodyBottom + lowerBody + cabinHeight / 2f, cabinZ - CarCabinLength / 2f + 0.05f),
+                new Vector3(CarWidth - 0.2f, 0.05f, cabinHeight * 1.25f), new Vector3(-48f, 0f, 0f), m.glass, false);
+            SiteBuilderUtil.Part(car, "RearWindow", PrimitiveType.Cube,
+                new Vector3(0f, bodyBottom + lowerBody + cabinHeight / 2f, cabinZ + CarCabinLength / 2f - 0.05f),
+                new Vector3(CarWidth - 0.2f, 0.05f, cabinHeight * 1.2f), new Vector3(52f, 0f, 0f), m.glass, false);
+
+            // Bumpers, headlights (nose, -z) and taillights (+z).
+            SiteBuilderUtil.Part(car, "BumperFront", PrimitiveType.Cube,
+                new Vector3(0f, bodyBottom + 0.12f, -halfLength - 0.03f), new Vector3(CarWidth + 0.06f, 0.2f, 0.12f), m.carBlack, false);
+            SiteBuilderUtil.Part(car, "BumperRear", PrimitiveType.Cube,
+                new Vector3(0f, bodyBottom + 0.12f, halfLength + 0.03f), new Vector3(CarWidth + 0.06f, 0.2f, 0.12f), m.carBlack, false);
+            foreach (float side in new[] { -1f, 1f })
+            {
+                SiteBuilderUtil.Part(car, "Headlight", PrimitiveType.Cube,
+                    new Vector3(side * (CarWidth / 2f - 0.25f), bodyBottom + lowerBody - 0.12f, -halfLength - 0.01f), new Vector3(0.32f, 0.14f, 0.05f), m.headlight, false);
+                SiteBuilderUtil.Part(car, "Taillight", PrimitiveType.Cube,
+                    new Vector3(side * (CarWidth / 2f - 0.25f), bodyBottom + lowerBody - 0.12f, halfLength + 0.01f), new Vector3(0.32f, 0.14f, 0.05f), m.taillight, false);
+            }
+
+            // Four wheels: dark cylinders turned on their side, poking out a little past the body.
+            foreach (float side in new[] { -1f, 1f })
+            {
+                foreach (float wz in new[] { -halfLength + 0.8f, halfLength - 0.8f })
+                {
+                    SiteBuilderUtil.Part(car, "Wheel", PrimitiveType.Cylinder,
+                        new Vector3(side * (CarWidth / 2f - 0.04f), FloorThickness + wheelRadius, wz),
+                        new Vector3(wheelRadius * 2f, 0.14f, wheelRadius * 2f), new Vector3(0f, 0f, 90f), m.tyre, false);
+                }
+            }
 
             var collider = car.gameObject.AddComponent<BoxCollider>();
             collider.size = new Vector3(CarWidth, totalHeight, CarLength);
