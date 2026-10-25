@@ -309,8 +309,10 @@ public static class EXT09_StageYard
         }
 
         // A net and two posts for each court.
-        BuildNet(court, "East", eastMinX - 0.5f, CourtMaxX + 0.5f, centerZ, wood, netWhite);
-        BuildNet(court, "West", westMinX - 0.5f, westMaxX + 0.5f, centerZ, wood, netWhite);
+        // The nets were moved by the team in the Unity Scene view: the east net 1.8 m east and 1 m north, the west net
+        // 1.86 m east and 0.62 m north of where they were first built.
+        BuildNet(court, "East", eastMinX - 0.5f + 1.8f, CourtMaxX + 0.5f + 1.8f, centerZ + 1f, wood, netWhite);
+        BuildNet(court, "West", westMinX - 0.5f + 1.86f, westMaxX + 0.5f + 1.86f, centerZ + 0.62f, wood, netWhite);
 
         // The red mud track in the foreground of the photo: long streaks of wet red earth with one big puddle.
         Material mud = SiteBuilderUtil.GetMaterial(Prefix, "RedMud", new Color32(168, 82, 56, 255), 0.05f);

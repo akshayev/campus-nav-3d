@@ -26,13 +26,13 @@ public static class EXT03_BikeShed
     // ------------------------------------------------------------------------------------
     // CONSTANTS - everything about the shed's size and look is set here (metres, long axis = x).
     // ------------------------------------------------------------------------------------
-    const float Length = 21f;          // shed length along x (the long side)
+    const float Length = 33f;          // shed length along x (the long side); was 21, lengthened by the team (the west end stays put)
     const float Depth = 8f;            // shed width along z (the short side, roof spans this)
     const float EaveHeight = 3.0f;     // height of the roof's two long edges above the ground
     const float CrownRise = 1.2f;      // how much higher the middle of the roof is than the edges (crown = 3.0 + 1.2 = 4.2 m)
     const float RoofThickness = 0.08f; // thickness of the roof sheet
     const int RoofSegments = 10;       // the curved roof is built from this many flat slices across its width
-    const int PolesPerSide = 6;        // round steel poles along EACH long edge (2 = corner poles only)
+    const int PolesPerSide = 10;       // round steel poles along EACH long edge (2 = corner poles only)
     const float PoleRadius = 0.09f;    // 0.09 = 0.18 m diameter
     const float FasciaHeight = 0.6f;   // dark band hanging down from each long roof edge
     const float FloorMargin = 0.5f;    // floor sticks out this far beyond the roof on every side

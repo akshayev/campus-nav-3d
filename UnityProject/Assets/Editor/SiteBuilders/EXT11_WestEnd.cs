@@ -144,7 +144,7 @@ public static class EXT11_WestEnd
     }
 
     // A young tree like the one in the photo: a thin bare trunk with a few layers of small yellow-green leaves.
-    static void BuildSapling(Transform parent, string name, float x, float z, Material trunk, Material leaves, Material pale)
+    internal static void BuildSapling(Transform parent, string name, float x, float z, Material trunk, Material leaves, Material pale)
     {
         Transform tree = SiteBuilderUtil.Group(parent, name);
         tree.localPosition = new Vector3(x, 0f, z);
