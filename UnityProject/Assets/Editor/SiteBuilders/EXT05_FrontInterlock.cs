@@ -99,7 +99,7 @@ public static class EXT05_FrontInterlock
     static readonly float[][] PalmPositions =
     {
         new[] { -8f, -16f }, new[] { 0f,  -16f }, new[] { 8f,  -16f }, new[] { 16f, -16f },
-        new[] { 24f, -16f }, new[] { 32f, -16f }, new[] { 40f, -16f }, new[] { 48f, -16f },
+        new[] { 24f, -16f }, new[] { 32f, -16f }, new[] { 40f, -16f },   // (the palm at 48,-16 was removed: the EXT16 brick path crosses there)
         // (The palms that stood at (-17,-6), (-30,-8) and (-24,8) were removed: that ground is now brick paving, EXT10.)
     };
 
@@ -122,10 +122,15 @@ public static class EXT05_FrontInterlock
         new[] { 36f, -23f, 0f }, new[] { 44f, -22f, 1f }, new[] { -32f, -22f, 0f },
     };
 
+    // Plaza lettering (centre x, z; letter size): on the main interlock, near its east end.
+    const float LetterX = 38f;
+    const float LetterZ = -4.6f;
+    const float LetterSize = 0.55f;
+
     // Basketball hoop and floodlights: positions. (The volleyball court is built by EXT09_StageYard.)
     const float HoopX = 42f;
     const float HoopZ = -2f;
-    static readonly float[][] FloodlightPositions = { new[] { -32f, -6f }, new[] { 60f, -14f } };
+    static readonly float[][] FloodlightPositions = { new[] { -32f, -6f }, new[] { 66f, -14f } };
     const float TrunkHeight = 6f;
     const float TrunkRadius = 0.18f;
     const int FrondCount = 8;
@@ -191,7 +196,7 @@ public static class EXT05_FrontInterlock
         Material earth = SiteBuilderUtil.GetMaterial("EXT05", "RedEarth", new Color32(138, 84, 56, 255), 0.02f);
         Material trunk = SiteBuilderUtil.GetMaterial("EXT05", "PalmTrunk", new Color32(110, 90, 70, 255), 0.05f);
         Material frond = SiteBuilderUtil.GetMaterial("EXT05", "PalmFrond", new Color32(60, 130, 55, 255), 0.1f);
-        Material foxtail = SiteBuilderUtil.GetMaterial("EXT05", "FoxtailGrey", new Color32(112, 156, 108, 255), 0.05f);
+        Material foxtail = SiteBuilderUtil.GetMaterial("EXT05", "FoxtailGrey", new Color32(156, 186, 74, 255), 0.05f);   // pale yellow-green, like the reference palms
         Material cage = SiteBuilderUtil.GetMaterial("EXT05", "WireCage", new Color32(24, 28, 26, 255), 0.2f);
 
         var root = new GameObject(RootName);
@@ -252,6 +257,8 @@ public static class EXT05_FrontInterlock
 
         // (The basketball hoop on the plaza was removed: the team wants nothing standing on the brick.)
 
+        BuildPlazaLettering(root.transform, "SATTVA", LetterX, LetterZ);
+
         // (The row of potted plants along the building front was removed: the team wants no plants on the brick.)
 
         // (The lawn flower bushes were removed: the plants now line the path to the main entrance, EXT07.)
@@ -274,7 +281,7 @@ public static class EXT05_FrontInterlock
         BuildStage(root.transform, stageRoof, stageFloor, stageWall, steel);
 
         Material lampGlow = SiteBuilderUtil.GetMaterial("EXT05", "TowerLamp", new Color32(150, 150, 140, 255), 0.1f);
-        BuildTower(root.transform, "FloodlightTower", TowerX, TowerZ, steel, lampGlow);
+        BuildLadderTower(root.transform, "FloodlightTower", TowerX, TowerZ, steel, lampGlow);
 
         Material canopy = SiteBuilderUtil.GetMaterial("EXT05", "TreeCanopy", new Color32(52, 98, 44, 255), 0.05f);
         BuildTreeBelt(root.transform, trunk, frond, canopy);
@@ -290,7 +297,7 @@ public static class EXT05_FrontInterlock
     // no collider) around the lower trunk.
     internal static void BuildCagedFoxtail(Transform parent, string name, float x, float z, float turnDegrees, Material trunk, Material frond, Material cage)
     {
-        BuildPalm(parent, name, x, z, turnDegrees, trunk, frond, 5.8f, 3.6f, true);
+        BuildPalm(parent, name, x, z, turnDegrees, trunk, frond, 6.4f, 3.8f, true, 0.09f);   // slim trunk, like the reference photo
         Transform cageGroup = SiteBuilderUtil.Group(parent.Find(name), "Cage");
         const float radius = 0.55f;
         const float height = 1.9f;
@@ -310,7 +317,7 @@ public static class EXT05_FrontInterlock
     // 'detailed' = true gives each frond two arched pieces (rises, then hangs down) and more fronds, which
     // looks like a real palm; false keeps the cheap single flat piece (used for the far treeline).
     internal static void BuildPalm(Transform parent, string name, float x, float z, float turnDegrees, Material trunk, Material frond,
-        float height = TrunkHeight, float frondLength = FrondLength, bool detailed = true)
+        float height = TrunkHeight, float frondLength = FrondLength, bool detailed = true, float trunkRadius = TrunkRadius)
     {
         Transform palm = SiteBuilderUtil.Group(parent, name);
         palm.localPosition = new Vector3(x, 0f, z);
@@ -319,7 +326,7 @@ public static class EXT05_FrontInterlock
         // A cylinder is 2 m tall at scale 1, so half the height is the y scale.
         SiteBuilderUtil.Part(palm, "Trunk", PrimitiveType.Cylinder,
             new Vector3(0f, height / 2f, 0f),
-            new Vector3(TrunkRadius * 2f, height / 2f, TrunkRadius * 2f), trunk, true);
+            new Vector3(trunkRadius * 2f, height / 2f, trunkRadius * 2f), trunk, true);
 
         Transform crown = SiteBuilderUtil.Group(palm, "Crown");
         crown.localPosition = new Vector3(0f, height, 0f);
@@ -517,15 +524,57 @@ public static class EXT05_FrontInterlock
         }
     }
 
+    // The big tower beside the volleyball courts, copied from the reference photos: a straight, narrow ladder-like
+    // column (two rails with rungs and diagonal braces), a lamp platform on top roofed with a tilted sheet of corrugated
+    // tin, and a red and white banner tied across its base. Visual only (no colliders).
+    internal static void BuildLadderTower(Transform parent, string name, float x, float z, Material steel, Material lamp)
+    {
+        Transform t = SiteBuilderUtil.Group(parent, name);
+        t.localPosition = new Vector3(x, 0f, z);
+        const float height = 12f;
+        const float halfWidth = 0.55f;
+        Material tin = SiteBuilderUtil.GetMaterial("EXT05", "TowerTin", new Color32(150, 156, 160, 255), 0.3f);
+        Material bannerWhite = SiteBuilderUtil.GetMaterial("EXT05", "BannerWhite", new Color32(236, 236, 232, 255), 0.05f);
+        Material bannerRed = SiteBuilderUtil.GetMaterial("EXT05", "BannerRed", new Color32(200, 40, 44, 255), 0.05f);
+
+        // Four straight rails, with a rung across every 0.8 m on the two long faces and a diagonal in each bay.
+        foreach (float sx in new[] { -1f, 1f })
+        {
+            foreach (float sz in new[] { -1f, 1f })
+            {
+                SiteBuilderUtil.Part(t, "Rail", PrimitiveType.Cylinder, new Vector3(sx * halfWidth, height / 2f, sz * halfWidth * 0.6f),
+                    new Vector3(0.1f, height / 2f, 0.1f), steel, false);
+            }
+        }
+        for (float y = 0.6f; y < height; y += 0.8f)
+        {
+            SiteBuilderUtil.Part(t, "Rung", PrimitiveType.Cube, new Vector3(0f, y, halfWidth * 0.6f), new Vector3(halfWidth * 2f, 0.05f, 0.05f), steel, false);
+            SiteBuilderUtil.Part(t, "Rung", PrimitiveType.Cube, new Vector3(0f, y, -halfWidth * 0.6f), new Vector3(halfWidth * 2f, 0.05f, 0.05f), steel, false);
+            GameObject brace = SiteBuilderUtil.Part(t, "Brace", PrimitiveType.Cube, new Vector3(0f, y + 0.4f, halfWidth * 0.6f),
+                new Vector3(halfWidth * 2.2f, 0.04f, 0.04f), steel, false);
+            brace.transform.localRotation = Quaternion.Euler(0f, 0f, ((int)(y / 0.8f) % 2 == 0) ? 36f : -36f);
+        }
+
+        // Lamp platform and the tilted sheet of tin on top, with a small lamp underneath.
+        SiteBuilderUtil.Part(t, "Platform", PrimitiveType.Cube, new Vector3(0f, height + 0.1f, 0f), new Vector3(1.6f, 0.12f, 1.2f), steel, false);
+        SiteBuilderUtil.Part(t, "Lamp", PrimitiveType.Cube, new Vector3(0f, height + 0.5f, 0f), new Vector3(0.9f, 0.4f, 0.7f), lamp, false);
+        SiteBuilderUtil.Part(t, "TinRoof", PrimitiveType.Cube, new Vector3(0.2f, height + 1.2f, 0f), new Vector3(3.4f, 0.07f, 2.3f),
+            new Vector3(0f, 0f, 14f), tin, false);
+
+        // The banner across the base: white board with a red band at the bottom, on the -z face (toward the volleyball courts).
+        SiteBuilderUtil.Part(t, "Banner", PrimitiveType.Cube, new Vector3(0f, 2.4f, -halfWidth * 0.6f - 0.12f), new Vector3(2.2f, 1.2f, 0.04f), bannerWhite, false);
+        SiteBuilderUtil.Part(t, "BannerBand", PrimitiveType.Cube, new Vector3(0f, 2.0f, -halfWidth * 0.6f - 0.15f), new Vector3(2.2f, 0.4f, 0.03f), bannerRed, false);
+    }
+
     // A tall lattice floodlight tower: four legs that lean in toward the top, horizontal frames every 4 m,
     // and a lamp head. Visual only, like the towers in the photos.
     internal static void BuildTower(Transform parent, string name, float x, float z, Material steel, Material lamp)
     {
         Transform t = SiteBuilderUtil.Group(parent, name);
         t.localPosition = new Vector3(x, 0f, z);
-        const float height = 18f;
-        const float baseHalf = 1.1f;
-        const float topHalf = 0.45f;
+        const float height = 14f;          // slender like the towers in the reference photo
+        const float baseHalf = 0.55f;
+        const float topHalf = 0.3f;
         foreach (float sx in new[] { -1f, 1f })
         {
             foreach (float sz in new[] { -1f, 1f })
@@ -534,7 +583,7 @@ public static class EXT05_FrontInterlock
                 Vector3 p1 = new Vector3(sx * topHalf, height, sz * topHalf);
                 Vector3 direction = p1 - p0;
                 GameObject leg = SiteBuilderUtil.Part(t, "Leg", PrimitiveType.Cylinder, (p0 + p1) / 2f,
-                    new Vector3(0.12f, direction.magnitude / 2f, 0.12f), steel, false);
+                    new Vector3(0.08f, direction.magnitude / 2f, 0.08f), steel, false);
                 leg.transform.localRotation = Quaternion.FromToRotation(Vector3.up, direction);
             }
         }
@@ -546,8 +595,31 @@ public static class EXT05_FrontInterlock
             SiteBuilderUtil.Part(t, "Frame_Z1", PrimitiveType.Cube, new Vector3(half, y, 0f), new Vector3(0.07f, 0.07f, half * 2f), steel, false);
             SiteBuilderUtil.Part(t, "Frame_Z2", PrimitiveType.Cube, new Vector3(-half, y, 0f), new Vector3(0.07f, 0.07f, half * 2f), steel, false);
         }
-        SiteBuilderUtil.Part(t, "Platform", PrimitiveType.Cube, new Vector3(0f, height + 0.1f, 0f), new Vector3(1.8f, 0.2f, 1.8f), steel, false);
-        SiteBuilderUtil.Part(t, "LampHead", PrimitiveType.Cube, new Vector3(0f, height + 0.7f, 0f), new Vector3(2.4f, 0.9f, 2.4f), lamp, false);
+        SiteBuilderUtil.Part(t, "Platform", PrimitiveType.Cube, new Vector3(0f, height + 0.1f, 0f), new Vector3(1.1f, 0.15f, 1.1f), steel, false);
+        SiteBuilderUtil.Part(t, "LampHead", PrimitiveType.Cube, new Vector3(0f, height + 0.4f, 0f), new Vector3(1.7f, 0.4f, 1.7f), lamp, false);
+    }
+
+    // The big white letters painted flat on the main interlock, like the lettering in the reference photos. The text runs
+    // north along the plaza (+z) and its tops point west (-x), so it reads correctly to someone standing at the east end
+    // of the plaza and looking west. A TextMesh (Unity's old 3D text) lying face-up. Visual only.
+    static void BuildPlazaLettering(Transform parent, string text, float x, float z)
+    {
+        var go = new GameObject("PlazaLettering");
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = new Vector3(x, 0.045f, z);
+        go.transform.localRotation = Quaternion.Euler(90f, -90f, 0f);
+
+        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        var mesh = go.AddComponent<TextMesh>();
+        mesh.text = text;
+        mesh.font = font;
+        mesh.fontSize = 64;
+        mesh.characterSize = LetterSize;
+        mesh.anchor = TextAnchor.MiddleCenter;
+        mesh.alignment = TextAlignment.Center;
+        mesh.fontStyle = FontStyle.Bold;
+        mesh.color = new Color32(238, 236, 228, 255);
+        go.GetComponent<MeshRenderer>().sharedMaterial = font.material;
     }
 
     // Basketball hoop on a steel pole, with a white backboard and an orange rim, facing the building.
@@ -621,9 +693,9 @@ public static class EXT05_FrontInterlock
                 int variation = random.Next(-14, 15);
                 // Greyish brown, like the real weathered paving (not pink).
                 var brick = new Color32(
-                    (byte)Mathf.Clamp(124 + variation, 0, 255),
-                    (byte)Mathf.Clamp(102 + variation, 0, 255),
-                    (byte)Mathf.Clamp(92 + variation, 0, 255), 255);
+                    (byte)Mathf.Clamp(104 + variation, 0, 255),
+                    (byte)Mathf.Clamp(92 + variation, 0, 255),
+                    (byte)Mathf.Clamp(86 + variation, 0, 255), 255);
 
                 for (int y = y0 + MortarPx; y < y0 + BrickHeightPx; y++)
                 {
@@ -656,14 +728,14 @@ public static class EXT05_FrontInterlock
                 float patch = 0.5f * Mathf.Sin(2f * Mathf.PI * (2f * u + 1.3f * v) + 0.7f)
                             + 0.3f * Mathf.Sin(2f * Mathf.PI * (3f * v - 2f * u) + 2.1f)
                             + 0.2f * Mathf.Sin(2f * Mathf.PI * (5f * u + 4f * v) + 4.0f);
-                int speckle = random.Next(-16, 17);
+                int speckle = random.Next(-10, 11);
 
-                float r = 86f + patch * 16f + speckle;
-                float g = 122f + patch * 20f + speckle;
-                float b = 52f + patch * 6f + speckle / 2f;
+                float r = 52f + patch * 8f + speckle;        // deeper, more even green (the reference lawn)
+                float g = 108f + patch * 11f + speckle;
+                float b = 38f + patch * 4f + speckle / 2f;
 
                 // Dry, yellowish areas where the patch value is low.
-                if (patch < -0.45f)
+                if (patch < -0.75f)
                 {
                     r += 28f;
                     g += 6f;
