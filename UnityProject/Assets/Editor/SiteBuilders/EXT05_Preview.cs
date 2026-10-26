@@ -137,6 +137,14 @@ public static class EXT05_Preview
             new View { name = "105_walkway_high", from = new Vector3(62f, 28f, -8f), lookAt = new Vector3(62f, 0f, 14f) },
             new View { name = "106_cabin_plaza", from = new Vector3(58f, 1.7f, -2f), lookAt = new Vector3(62f, 3.2f, 24f) },
             new View { name = "107_cabin_high", from = new Vector3(61f, 26f, -4f), lookAt = new Vector3(61f, 0f, 14f) },
+            new View { name = "108_letters_east", from = new Vector3(56f, 1.9f, -4.6f), lookAt = new Vector3(20f, 2.4f, -4.6f) },
+            new View { name = "109_letters_high", from = new Vector3(46f, 24f, -4.6f), lookAt = new Vector3(38f, 0f, -4.6f) },
+            new View { name = "110_from_inside", from = new Vector3(38f, 2.0f, 12f), lookAt = new Vector3(38f, 0.5f, -6f) },
+            new View { name = "111_hall_front", from = new Vector3(58f, 1.7f, 12f), lookAt = new Vector3(59f, 3.2f, 22f) },
+            new View { name = "112_hall_inside", from = new Vector3(59.2f, 1.7f, 23.5f), lookAt = new Vector3(59f, 2.6f, 36f) },
+            new View { name = "113_hall_inside2", from = new Vector3(59f, 1.7f, 39f), lookAt = new Vector3(59f, 2.6f, 24f) },
+            new View { name = "114_hall_side", from = new Vector3(68f, 3f, 14f), lookAt = new Vector3(60f, 3.5f, 28f) },
+            new View { name = "115_hall_high", from = new Vector3(59f, 34f, 12f), lookAt = new Vector3(59f, 0f, 30f) },
             new View { name = "6_stage_and_sheds", from = new Vector3(-50f, 8f, -4f),  lookAt = new Vector3(-10f, 2f, -28f) },
         };
 
