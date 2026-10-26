@@ -225,12 +225,13 @@ public static class EXT18_EastEntryDetail
     static void BuildBackdrop(Transform parent, Material bark, Material coconutFrond, Material leaves)
     {
         Transform b = SiteBuilderUtil.Group(parent, "Backdrop");
-        float[][] palms = { new[] { 57f, 25f }, new[] { 63f, 32f }, new[] { 69f, 33f }, new[] { 75f, 30f }, new[] { 77f, 22f }, new[] { 55f, 33f } };
+        // (Moved clear of the badminton hall, which stands at x 55..63, z 21..40.)
+        float[][] palms = { new[] { 67.5f, 25f }, new[] { 66f, 33f }, new[] { 70f, 34f }, new[] { 75f, 30f }, new[] { 77f, 22f }, new[] { 60f, 46f } };
         for (int i = 0; i < palms.Length; i++)
         {
             EXT05_FrontInterlock.BuildPalm(b, "Coconut_" + (i + 1), palms[i][0], palms[i][1], i * 61f, bark, coconutFrond, 10f + (i % 3) * 1.8f, 4.2f, false);
         }
-        float[][] trees = { new[] { 58f, 21.5f }, new[] { 74.5f, 24f }, new[] { 66f, 36f } };
+        float[][] trees = { new[] { 68.5f, 21.5f }, new[] { 74.5f, 24f }, new[] { 67f, 41f } };
         for (int i = 0; i < trees.Length; i++)
         {
             Transform t = SiteBuilderUtil.Group(b, "Tree_" + (i + 1));

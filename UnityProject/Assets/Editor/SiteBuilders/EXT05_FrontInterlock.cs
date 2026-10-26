@@ -125,7 +125,10 @@ public static class EXT05_FrontInterlock
     // Plaza lettering (centre x, z; letter size): on the main interlock, near its east end.
     const float LetterX = 38f;
     const float LetterZ = -4.6f;
-    const float LetterSize = 0.55f;
+    const float LetterHeight = 2.2f;     // each letter is this tall (along x) ...
+    const float LetterWidth = 1.5f;      // ... and this wide (along z)
+    const float LetterGap = 0.5f;        // space between letters
+    const float LetterStroke = 0.35f;    // thickness of the painted strokes
 
     // Basketball hoop and floodlights: positions. (The volleyball court is built by EXT09_StageYard.)
     const float HoopX = 42f;
@@ -599,27 +602,75 @@ public static class EXT05_FrontInterlock
         SiteBuilderUtil.Part(t, "LampHead", PrimitiveType.Cube, new Vector3(0f, height + 0.4f, 0f), new Vector3(1.7f, 0.4f, 1.7f), lamp, false);
     }
 
-    // The big white letters painted flat on the main interlock, like the lettering in the reference photos. The text runs
-    // north along the plaza (+z) and its tops point west (-x), so it reads correctly to someone standing at the east end
-    // of the plaza and looking west. A TextMesh (Unity's old 3D text) lying face-up. Visual only.
+    // The big white letters painted on the main interlock, like the lettering in the reference photos. Each letter is drawn from
+    // flat white bars that lie ON the brick (1.2 cm thick, no collider), so they are real solid geometry like the paving: walls and
+    // characters hide them correctly, and they cannot show through the building. (An earlier version used Unity's old TextMesh, whose
+    // shader ignores depth, so the word showed through walls and through the avatar.)
+    // The text runs north along the plaza (+z) and its tops point west (-x), so it reads correctly to someone standing at the east
+    // end of the plaza looking west.
     static void BuildPlazaLettering(Transform parent, string text, float x, float z)
     {
-        var go = new GameObject("PlazaLettering");
-        go.transform.SetParent(parent, false);
-        go.transform.localPosition = new Vector3(x, 0.045f, z);
-        go.transform.localRotation = Quaternion.Euler(90f, -90f, 0f);
+        Transform word = SiteBuilderUtil.Group(parent, "PlazaLettering");
+        Material paint = SiteBuilderUtil.GetMaterial("EXT05", "PlazaPaint", new Color32(238, 236, 228, 255), 0.02f);
 
-        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        var mesh = go.AddComponent<TextMesh>();
-        mesh.text = text;
-        mesh.font = font;
-        mesh.fontSize = 64;
-        mesh.characterSize = LetterSize;
-        mesh.anchor = TextAnchor.MiddleCenter;
-        mesh.alignment = TextAlignment.Center;
-        mesh.fontStyle = FontStyle.Bold;
-        mesh.color = new Color32(238, 236, 228, 255);
-        go.GetComponent<MeshRenderer>().sharedMaterial = font.material;
+        float total = text.Length * LetterWidth + (text.Length - 1) * LetterGap;
+        float u = -total / 2f;     // along the text (-> world +z), measured from the middle of the word
+        for (int i = 0; i < text.Length; i++)
+        {
+            Transform letter = SiteBuilderUtil.Group(word, "Letter_" + text[i] + "_" + (i + 1));
+            AddLetter(letter, paint, text[i], x, z, u);
+            u += LetterWidth + LetterGap;
+        }
+    }
+
+    // Draws one block letter (S, A, T or V) as bars. (u, v) is a point on the letter: u across (0 .. LetterWidth), v up (0 .. LetterHeight).
+    static void AddLetter(Transform parent, Material paint, char letter, float x, float z, float u0)
+    {
+        float w = LetterWidth;
+        float h = LetterHeight;
+        switch (letter)
+        {
+            case 'S':
+                Stroke(parent, paint, x, z, u0 + 0f, h, u0 + w, h);                  // top
+                Stroke(parent, paint, x, z, u0 + 0f, h, u0 + 0f, h / 2f);            // upper left
+                Stroke(parent, paint, x, z, u0 + 0f, h / 2f, u0 + w, h / 2f);        // middle
+                Stroke(parent, paint, x, z, u0 + w, h / 2f, u0 + w, 0f);             // lower right
+                Stroke(parent, paint, x, z, u0 + 0f, 0f, u0 + w, 0f);                // bottom
+                break;
+            case 'A':
+                Stroke(parent, paint, x, z, u0 + 0f, 0f, u0 + 0f, h);                // left
+                Stroke(parent, paint, x, z, u0 + w, 0f, u0 + w, h);                  // right
+                Stroke(parent, paint, x, z, u0 + 0f, h, u0 + w, h);                  // top
+                Stroke(parent, paint, x, z, u0 + 0f, h / 2f, u0 + w, h / 2f);        // middle
+                break;
+            case 'T':
+                Stroke(parent, paint, x, z, u0 + 0f, h, u0 + w, h);                  // top
+                Stroke(parent, paint, x, z, u0 + w / 2f, 0f, u0 + w / 2f, h);        // stem
+                break;
+            case 'V':
+                Stroke(parent, paint, x, z, u0 + 0f, h, u0 + w / 2f, 0f);            // left slope
+                Stroke(parent, paint, x, z, u0 + w, h, u0 + w / 2f, 0f);             // right slope
+                break;
+            default:
+                throw new System.Exception("AddLetter: no shape for the letter '" + letter + "'");
+        }
+    }
+
+    // One painted bar from (u1, v1) to (u2, v2) (the ends are made a stroke-width longer so bars overlap at the corners).
+    // u runs along world +z, v runs along world -x; the bar lies flat on the plaza paving (top at y 0.03).
+    static void Stroke(Transform parent, Material paint, float x, float z, float u1, float v1, float u2, float v2)
+    {
+        float du = u2 - u1;
+        float dv = v2 - v1;
+        float length = Mathf.Sqrt(du * du + dv * dv) + LetterStroke;
+        float centerU = (u1 + u2) / 2f;
+        float centerV = (v1 + v2) / 2f;
+        // v (up the letter) maps to world -x, u (along the word) to world +z; so a direction (du, dv) is (-dv, du) in (x, z).
+        float yaw = Mathf.Atan2(-dv, du) * Mathf.Rad2Deg;
+        GameObject bar = SiteBuilderUtil.Part(parent, "Bar", PrimitiveType.Cube,
+            new Vector3(x - (centerV - LetterHeight / 2f), 0.036f, z + centerU),
+            new Vector3(LetterStroke, 0.012f, length), paint, false);
+        bar.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
     }
 
     // Basketball hoop on a steel pole, with a white backboard and an orange rim, facing the building.
