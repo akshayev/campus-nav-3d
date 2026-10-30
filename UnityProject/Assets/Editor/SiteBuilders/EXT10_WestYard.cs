@@ -94,7 +94,6 @@ public static class EXT10_WestYard
         {
             brick.color = new Color32(124, 104, 94, 255); // run Campus > Build EXT05 Front Yard first for the brick picture
         }
-        Material puddle = SiteBuilderUtil.GetMaterial(Prefix, "Puddle", new Color32(62, 72, 84, 255), 0.95f);
 
         var root = new GameObject(RootName);
         root.transform.position = Vector3.zero;
@@ -119,16 +118,7 @@ public static class EXT10_WestYard
         SiteBuilderUtil.Part(root.transform, "StageBand", PrimitiveType.Cube,
             new Vector3((BandMinX + BandMaxX) / 2f, Thickness / 2f, (BandMinZ + BandMaxZ) / 2f),
             new Vector3(bandWidth, Thickness, bandDepth), bandBrick, false);
-        SiteBuilderUtil.Part(root.transform, "BandPuddle", PrimitiveType.Cylinder,
-            new Vector3(-48f, Thickness + 0.003f, -4f), new Vector3(8f, 0.003f, 3.4f), puddle, false);
-
-        Transform puddles = SiteBuilderUtil.Group(root.transform, "Puddles");
-        for (int i = 0; i < Puddles.Length; i++)
-        {
-            float[] p = Puddles[i];
-            SiteBuilderUtil.Part(puddles, "Puddle_" + (i + 1), PrimitiveType.Cylinder,
-                new Vector3(p[0], Thickness + 0.003f, p[1]), new Vector3(p[2] * 2f, 0.003f, p[3] * 2f), puddle, false);
-        }
+        // (The puddles on the yard and the band were removed: the team does not want the blue patches on the interlock.)
 
         SiteBuilderUtil.SaveSceneAndAssets(scene);
         Debug.Log("EXT10_WestYard: built " + SiteBuilderUtil.CountObjects(root) + " objects (" + width + " m x " + depth + " m).");

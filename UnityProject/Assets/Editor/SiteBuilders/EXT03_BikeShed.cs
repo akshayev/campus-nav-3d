@@ -155,7 +155,7 @@ public static class EXT03_BikeShed
                 // Unity's Cylinder is 2 m tall and 1 m wide, so scale y by height / 2 and x/z by the diameter.
                 SiteBuilderUtil.Part(poleGroup, "Pole_" + sideName + "_" + (i + 1).ToString("00"), PrimitiveType.Cylinder,
                     new Vector3(x, floorTop + poleHeight / 2f, z),
-                    new Vector3(PoleRadius * 2f, poleHeight / 2f, PoleRadius * 2f), steel, true);
+                    new Vector3(PoleRadius * 2f, poleHeight / 2f, PoleRadius * 2f), steel, true).layer = 2;   // layer 2: the follow camera's collision ray ignores it (the avatar still bumps into it), as EXT04 does for its poles
             }
         }
 
