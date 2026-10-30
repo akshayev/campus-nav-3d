@@ -274,10 +274,8 @@ public static class EXT08_MCABlock
             new Vector3(0f, 0.02f, frontZ - YardDepth / 2f), new Vector3(HalfLength * 2f + 1f, 0.04f, YardDepth), yard, false);
 
         // A puddle with three grey stepping stones beside the end wing (as in the photo).
-        Material puddleMat = SiteBuilderUtil.GetMaterial(Prefix, "Puddle", new Color32(62, 72, 84, 255), 0.95f);
+        // (The puddle beside the end wing was removed: the team does not want blue patches on the brick.)
         Material stone = SiteBuilderUtil.GetMaterial(Prefix, "StepStone", new Color32(128, 126, 120, 255), 0.05f);
-        SiteBuilderUtil.Part(y, "Puddle", PrimitiveType.Cylinder, new Vector3(-HalfLength + 1f, 0.05f, frontZ - 2.2f),
-            new Vector3(6f, 0.003f, 3.4f), puddleMat, false);
         for (int i = 0; i < 3; i++)
         {
             SiteBuilderUtil.Part(y, "StepStone_" + (i + 1), PrimitiveType.Cube, new Vector3(-HalfLength - 0.2f + i * 1.3f, 0.12f, frontZ - 1.5f - i * 0.3f),

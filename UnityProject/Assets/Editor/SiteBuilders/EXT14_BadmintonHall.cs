@@ -37,6 +37,11 @@ public static class EXT14_BadmintonHall
     const string ExtrasName = "Extras";
     const string Prefix = "EXT14";
 
+    // The follow camera's collision ray ignores layer 2 ("Ignore Raycast"), while the avatar still bumps into it. The hall's walls are on
+    // it: otherwise a wall between the avatar and the camera pulls the camera right up against the avatar and the avatar disappears
+    // (the ShedRoofFader below hides the walls and roof, so the camera can see through them instead).
+    const int CameraPassThroughLayer = 2;
+
     // Where the hall stands (world x, z): its south end (the door end) at z 21.2, right behind the walkway between the main
     // building (east wall at x 54) and the old shed (x 65..74). The y (height 1) of the object is left as it was.
     const float RootX = 59.0f;
@@ -94,7 +99,7 @@ public static class EXT14_BadmintonHall
 
     class Mats
     {
-        public Material wallGreenLong, wallGreenEnd, wallGreyLong, wallGreyEnd, gableOut, gableIn, concrete, vent, roof, steel;
+        public Material wallGreenLong, wallGreenEnd, wallGreyLong, wallGreyEnd, gableOut, gableIn, concrete, vent, roof, roofIn, steel;
         public Material floor, courtOrange, courtGreen, line, netWhite, window, lamp, doorGreen, doorMark, post;
         public Material leanOrange, leanOrangeSide, leanDark, leanRed, leanRoof;
         public Material cabinWhite, dark, pot, plant, goalFrame, goalNet, rust;
@@ -130,7 +135,7 @@ public static class EXT14_BadmintonHall
         Transform endWalls = BuildEndWalls(model, m);
         Transform roofGroup = BuildRoofAndRibs(model, m);
         BuildLamps(model, m);
-        BuildLeanTo(model, m);
+        Transform leanTo = BuildLeanTo(model, m);
         BuildCabin(extras, m);
         BuildGoals(extras, m);
 
@@ -142,9 +147,10 @@ public static class EXT14_BadmintonHall
         var serialized = new SerializedObject(fader);
         serialized.FindProperty("roofGroup").objectReferenceValue = roofGroup;
         SerializedProperty alsoHide = serialized.FindProperty("alsoHide");
-        alsoHide.arraySize = 2;
+        alsoHide.arraySize = 3;
         alsoHide.GetArrayElementAtIndex(0).objectReferenceValue = sideWalls;
         alsoHide.GetArrayElementAtIndex(1).objectReferenceValue = endWalls;
+        alsoHide.GetArrayElementAtIndex(2).objectReferenceValue = leanTo;
         serialized.FindProperty("footprintHalfSize").vector2Value = new Vector2(HalfLength + WallThickness, HalfWidth + WallThickness);
         serialized.FindProperty("margin").floatValue = 1.5f;
         serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -213,6 +219,7 @@ public static class EXT14_BadmintonHall
             concrete = SiteBuilderUtil.GetMaterial(Prefix, "Concrete", new Color32(176, 172, 162, 255), 0.02f),
             vent = SiteBuilderUtil.GetMaterial(Prefix, "VentMesh", new Color32(196, 204, 192, 255), 0.2f),
             roof = SiteBuilderUtil.GetMaterial(Prefix, "RoofGrey", new Color32(132, 138, 144, 255), 0.02f),
+            roofIn = SiteBuilderUtil.GetMaterial(Prefix, "RoofUnderside", new Color32(196, 202, 202, 255), 0.02f),
             steel = SiteBuilderUtil.GetMaterial(Prefix, "Steel", new Color32(56, 62, 70, 255), 0.3f),
             floor = SiteBuilderUtil.GetMaterial(Prefix, "Floor", new Color32(150, 146, 138, 255), 0.05f),
             courtOrange = SiteBuilderUtil.GetMaterial(Prefix, "CourtOrange", new Color32(206, 128, 100, 255), 0.05f),
@@ -320,7 +327,7 @@ public static class EXT14_BadmintonHall
         foreach (float s in new[] { -1f, 1f })
         {
             SiteBuilderUtil.Part(walls, "WallOuter", PrimitiveType.Cube, new Vector3(0f, WallHeight / 2f, s * (HalfWidth + WallThickness / 2f)),
-                new Vector3(length, WallHeight, WallThickness), m.wallGreenLong, true);
+                new Vector3(length, WallHeight, WallThickness), m.wallGreenLong, true).layer = CameraPassThroughLayer;
             SiteBuilderUtil.Part(walls, "WallInner", PrimitiveType.Cube, new Vector3(0f, (BaseHeight + WallHeight) / 2f, s * (HalfWidth - 0.01f)),
                 new Vector3(2f * HalfLength, WallHeight - BaseHeight, 0.02f), m.wallGreyLong, false);
             SiteBuilderUtil.Part(walls, "BaseInside", PrimitiveType.Cube, new Vector3(0f, BaseHeight / 2f, s * (HalfWidth - 0.05f)),
@@ -346,7 +353,7 @@ public static class EXT14_BadmintonHall
         // ---- North end (x = -HalfLength - ...): solid.
         float nx = -(HalfLength + WallThickness / 2f);
         SiteBuilderUtil.Part(ends, "NorthWall", PrimitiveType.Cube, new Vector3(nx, WallHeight / 2f, 0f),
-            new Vector3(WallThickness, WallHeight, 2f * outerHalf), m.wallGreenEnd, true);
+            new Vector3(WallThickness, WallHeight, 2f * outerHalf), m.wallGreenEnd, true).layer = CameraPassThroughLayer;
         SiteBuilderUtil.Part(ends, "NorthInner", PrimitiveType.Cube, new Vector3(-(HalfLength - 0.01f), (BaseHeight + WallHeight) / 2f, 0f),
             new Vector3(0.02f, WallHeight - BaseHeight, 2f * HalfWidth), m.wallGreyEnd, false);
         SiteBuilderUtil.Part(ends, "NorthBaseInside", PrimitiveType.Cube, new Vector3(-(HalfLength - 0.05f), BaseHeight / 2f, 0f),
@@ -354,9 +361,9 @@ public static class EXT14_BadmintonHall
         SiteBuilderUtil.Part(ends, "NorthBaseOutside", PrimitiveType.Cube, new Vector3(-(HalfLength + WallThickness + 0.03f), 0.45f, 0f),
             new Vector3(0.06f, 0.9f, 2f * outerHalf + 0.12f), m.concrete, false);
         BuildGableFill(ends, -1f, "NorthGable", m);
-        foreach (float z in new[] { -1.5f, 1.5f })
+        foreach (float z in new[] { -1.15f, 1.15f })
         {
-            SiteBuilderUtil.Part(ends, "NorthWindow", PrimitiveType.Cube, new Vector3(nx, WallHeight + 1.25f, z), new Vector3(0.3f, 1.5f, 1.2f), m.window, false);
+            ArchWindow(ends, m, nx, WallHeight + 0.35f, z, 1.1f, 2.4f);
         }
 
         // ---- South end (x = +HalfLength + ...): a door opening at z DoorZMin .. DoorZMax.
@@ -364,11 +371,11 @@ public static class EXT14_BadmintonHall
         float leftWidth = DoorZMin + outerHalf;                  // from -outerHalf to DoorZMin
         float rightWidth = outerHalf - DoorZMax;                 // from DoorZMax to +outerHalf
         SiteBuilderUtil.Part(ends, "SouthWallLeft", PrimitiveType.Cube, new Vector3(sx, WallHeight / 2f, (-outerHalf + DoorZMin) / 2f),
-            new Vector3(WallThickness, WallHeight, leftWidth), m.wallGreenEnd, true);
+            new Vector3(WallThickness, WallHeight, leftWidth), m.wallGreenEnd, true).layer = CameraPassThroughLayer;
         SiteBuilderUtil.Part(ends, "SouthWallRight", PrimitiveType.Cube, new Vector3(sx, WallHeight / 2f, (DoorZMax + outerHalf) / 2f),
-            new Vector3(WallThickness, WallHeight, rightWidth), m.wallGreenEnd, true);
+            new Vector3(WallThickness, WallHeight, rightWidth), m.wallGreenEnd, true).layer = CameraPassThroughLayer;
         SiteBuilderUtil.Part(ends, "SouthLintel", PrimitiveType.Cube, new Vector3(sx, (DoorHeight + WallHeight) / 2f, (DoorZMin + DoorZMax) / 2f),
-            new Vector3(WallThickness, WallHeight - DoorHeight, DoorZMax - DoorZMin), m.wallGreenEnd, true);
+            new Vector3(WallThickness, WallHeight - DoorHeight, DoorZMax - DoorZMin), m.wallGreenEnd, true).layer = CameraPassThroughLayer;
         // Grey inside faces and the concrete base outside, with the door gap left open.
         float innerLeft = DoorZMin + HalfWidth;
         float innerRight = HalfWidth - DoorZMax;
@@ -452,7 +459,8 @@ public static class EXT14_BadmintonHall
         float roofRise = Rise + 0.2f;
         float roofHalfLength = HalfLength + WallThickness + 0.6f;
         var vertices = new System.Collections.Generic.List<Vector3>();
-        var indices = new System.Collections.Generic.List<int>();
+        var roofOutside = new System.Collections.Generic.List<int>();
+        var roofInside = new System.Collections.Generic.List<int>();
         for (int i = 0; i < ArchSegments; i++)
         {
             float t0 = Mathf.PI * i / ArchSegments;
@@ -461,12 +469,14 @@ public static class EXT14_BadmintonHall
             Vector3 a1 = new Vector3(-roofHalfLength, roofRise * Mathf.Sin(t1), -roofHalfWidth * Mathf.Cos(t1));
             Vector3 b0 = new Vector3(roofHalfLength, a0.y, a0.z);
             Vector3 b1 = new Vector3(roofHalfLength, a1.y, a1.z);
-            AddDoubleTriangle(vertices, indices, a0, a1, b1);
-            AddDoubleTriangle(vertices, indices, a0, b1, b0);
+            AddRoofTriangle(vertices, roofOutside, roofInside, a0, a1, b1, roofRise, roofHalfWidth);
+            AddRoofTriangle(vertices, roofOutside, roofInside, a0, b1, b0, roofRise, roofHalfWidth);
         }
         var mesh = new Mesh { name = "EXT14_Hall_Roof" };
         mesh.SetVertices(vertices);
-        mesh.SetTriangles(indices, 0);
+        mesh.subMeshCount = 2;
+        mesh.SetTriangles(roofOutside, 0);
+        mesh.SetTriangles(roofInside, 1);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         const string path = "Assets/Meshes/Sites/EXT14_Hall_Roof.asset";
@@ -477,7 +487,7 @@ public static class EXT14_BadmintonHall
         go.transform.SetParent(roofGroup, false);
         go.transform.localPosition = new Vector3(0f, WallHeight, 0f);
         go.AddComponent<MeshFilter>().sharedMesh = mesh;
-        go.AddComponent<MeshRenderer>().sharedMaterial = m.roof;
+        go.AddComponent<MeshRenderer>().sharedMaterials = new[] { m.roof, m.roofIn };
 
         // Steel arch ribs just under the roof, every 3 m, and long purlins running along the hall.
         Transform ribs = SiteBuilderUtil.Group(model, "Ribs");
@@ -496,6 +506,30 @@ public static class EXT14_BadmintonHall
                 bar.transform.localRotation = Quaternion.LookRotation(d.normalized, Vector3.right);
             }
         }
+        // Skylights: pale translucent panels in a row along the ridge, as in the roof photo. Each is a thin glowing slab through the roof.
+        Transform lights = SiteBuilderUtil.Group(model, "Skylights");
+        foreach (float x in new[] { -6.5f, -2.2f, 2.2f, 6.5f })
+        {
+            SiteBuilderUtil.Part(lights, "Skylight", PrimitiveType.Cube, new Vector3(x, WallHeight + roofRise - 0.04f, 0f), new Vector3(1.8f, 0.14f, 1.5f), m.window, false);
+        }
+        // Two round exhaust fans on the underside of the roof, one each side of the ridge: a pale housing and four dark blades.
+        foreach (float side in new[] { -1f, 1f })
+        {
+            float a = Mathf.Acos(Mathf.Clamp(side * 2.2f / ribHalf, -1f, 1f));
+            Vector3 position = new Vector3(0.5f, WallHeight + ribRise * Mathf.Sin(a) - 0.1f, -ribHalf * Mathf.Cos(a));
+            // The way the underside faces: opposite to the outward direction of the ellipse at this point.
+            Vector3 outwardGradient = new Vector3(0f, (ribRise * Mathf.Sin(a)) / (ribRise * ribRise), (-ribHalf * Mathf.Cos(a)) / (ribHalf * ribHalf));
+            Vector3 inward = (-outwardGradient).normalized;
+            Quaternion facing = Quaternion.FromToRotation(Vector3.up, inward);
+            GameObject housing = SiteBuilderUtil.Part(lights, "FanHousing", PrimitiveType.Cylinder, position, new Vector3(0.9f, 0.05f, 0.9f), m.roofIn, false);
+            housing.transform.localRotation = facing;
+            for (int blade = 0; blade < 4; blade++)
+            {
+                GameObject bar = SiteBuilderUtil.Part(lights, "FanBlade", PrimitiveType.Cube, position + inward * -0.06f, new Vector3(0.7f, 0.02f, 0.12f), m.steel, false);
+                bar.transform.localRotation = facing * Quaternion.Euler(0f, blade * 45f + 20f, 0f);
+            }
+        }
+
         foreach (float t in new[] { 0.14f, 0.28f, 0.42f, 0.58f, 0.72f, 0.86f })
         {
             float a = Mathf.PI * t;
@@ -505,11 +539,35 @@ public static class EXT14_BadmintonHall
         return roofGroup;
     }
 
-    static void AddDoubleTriangle(System.Collections.Generic.List<Vector3> vertices, System.Collections.Generic.List<int> indices, Vector3 a, Vector3 b, Vector3 c)
+    // One roof triangle, added twice: once facing OUT of the hall (sub-mesh 0, grey) and once facing IN (sub-mesh 1, pale underside).
+    // "Out" is the way the ellipse of the arch points at the triangle's middle.
+    static void AddRoofTriangle(System.Collections.Generic.List<Vector3> vertices, System.Collections.Generic.List<int> outside, System.Collections.Generic.List<int> inside,
+        Vector3 a, Vector3 b, Vector3 c, float rise, float halfWidth)
     {
+        Vector3 middle = (a + b + c) / 3f;
+        Vector3 outward = new Vector3(0f, middle.y / (rise * rise), middle.z / (halfWidth * halfWidth));
+        if (Vector3.Dot(Vector3.Cross(b - a, c - a), outward) < 0f)
+        {
+            Vector3 swap = b; b = c; c = swap;
+        }
         int s = vertices.Count;
         vertices.AddRange(new[] { a, b, c, a, c, b });
-        indices.AddRange(new[] { s, s + 1, s + 2, s + 3, s + 4, s + 5 });
+        outside.AddRange(new[] { s, s + 1, s + 2 });
+        inside.AddRange(new[] { s + 3, s + 4, s + 5 });
+    }
+
+    // A window with an arched top (a box plus half a disc), pale and glowing, with a dark cross-bar and a dark centre bar. It stands in the
+    // plane x = 'x' and is seen from both sides. 'bottom' is the height of its sill, 'width' and 'height' include the arch.
+    static void ArchWindow(Transform parent, Mats m, float x, float bottom, float z, float width, float height)
+    {
+        float archRadius = width / 2f;
+        float boxHeight = height - archRadius;
+        SiteBuilderUtil.Part(parent, "ArchWindow", PrimitiveType.Cube, new Vector3(x, bottom + boxHeight / 2f, z), new Vector3(0.3f, boxHeight, width), m.window, false);
+        GameObject arch = SiteBuilderUtil.Part(parent, "ArchWindowTop", PrimitiveType.Cylinder, new Vector3(x, bottom + boxHeight, z),
+            new Vector3(width, 0.15f, width), m.window, false);
+        arch.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);   // lies with its flat faces toward +x / -x
+        SiteBuilderUtil.Part(parent, "WindowBar", PrimitiveType.Cube, new Vector3(x, bottom + height * 0.45f, z), new Vector3(0.34f, 0.06f, width), m.steel, false);
+        SiteBuilderUtil.Part(parent, "WindowBar", PrimitiveType.Cube, new Vector3(x, bottom + height / 2f, z), new Vector3(0.34f, height, 0.06f), m.steel, false);
     }
 
     // Six bright ceiling lamps hanging near the walls (the glow makes the inside look lit).
@@ -531,13 +589,13 @@ public static class EXT14_BadmintonHall
 
     // The orange corrugated lean-to against the east long wall, near the south end: orange walls, two doors and a red band on the
     // front, and a grey roof that slopes away from the hall. (+z in this frame is world east.)
-    static void BuildLeanTo(Transform model, Mats m)
+    static Transform BuildLeanTo(Transform model, Mats m)
     {
         Transform lean = SiteBuilderUtil.Group(model, "LeanTo");
         float zWall = HalfWidth + WallThickness;
         float centreX = HalfLength - 1.9f;
         float centreZ = zWall + 1.25f;
-        SiteBuilderUtil.Part(lean, "Walls", PrimitiveType.Cube, new Vector3(centreX, 1.2f, centreZ), new Vector3(4.4f, 2.4f, 2.5f), m.leanOrange, true);
+        SiteBuilderUtil.Part(lean, "Walls", PrimitiveType.Cube, new Vector3(centreX, 1.2f, centreZ), new Vector3(4.4f, 2.4f, 2.5f), m.leanOrange, true).layer = CameraPassThroughLayer;
         float frontX = centreX + 2.2f + 0.015f;
         for (int i = 0; i < 2; i++)
         {
@@ -546,6 +604,7 @@ public static class EXT14_BadmintonHall
         SiteBuilderUtil.Part(lean, "RedBand", PrimitiveType.Cube, new Vector3(frontX + 0.005f, 2.25f, centreZ), new Vector3(0.03f, 0.3f, 2.5f), m.leanRed, false);
         GameObject roof = SiteBuilderUtil.Part(lean, "Roof", PrimitiveType.Cube, new Vector3(centreX, 2.55f, centreZ), new Vector3(4.9f, 0.08f, 3.0f), m.leanRoof, false);
         roof.transform.localRotation = Quaternion.Euler(-5f, 0f, 0f);
+        return lean;
     }
 
     // The small white cabin with a window, a door, a flat roof and two potted plants. In the Extras group (which turns with the root).

@@ -225,15 +225,7 @@ public static class EXT05_FrontInterlock
             new Vector3((MinX + MaxX) / 2f, PaverThickness / 2f, (NearZ + FarZ) / 2f),
             new Vector3(width, PaverThickness, depth), paving, false);
 
-        // Rain puddles on the paving: flat dark, shiny ovals (like the wet patches in the photos).
-        Material puddle = SiteBuilderUtil.GetMaterial("EXT05", "Puddle", new Color32(62, 72, 84, 255), 0.95f);
-        Transform puddles = SiteBuilderUtil.Group(root.transform, "Puddles");
-        foreach (float[] p in new[] { new[] { 30f, -5f, 4f, 1.8f }, new[] { 6f, -9f, 3f, 1.4f }, new[] { 44f, -9f, 2.5f, 1.2f } })
-        {
-            SiteBuilderUtil.Part(puddles, "Puddle", PrimitiveType.Cylinder,
-                new Vector3(p[0], PaverThickness + 0.003f, p[1]),
-                new Vector3(p[2] * 2f, 0.003f, p[3] * 2f), puddle, false);
-        }
+        // (The rain puddles on the paving were removed: the team does not want the blue patches on the interlock.)
 
         Transform lines = SiteBuilderUtil.Group(root.transform, "PaintedLines");
         for (int i = 0; i < LineCount; i++)
@@ -329,7 +321,7 @@ public static class EXT05_FrontInterlock
         // A cylinder is 2 m tall at scale 1, so half the height is the y scale.
         SiteBuilderUtil.Part(palm, "Trunk", PrimitiveType.Cylinder,
             new Vector3(0f, height / 2f, 0f),
-            new Vector3(trunkRadius * 2f, height / 2f, trunkRadius * 2f), trunk, true);
+            new Vector3(trunkRadius * 2f, height / 2f, trunkRadius * 2f), trunk, true).layer = 2;   // layer 2: the follow camera's collision ray ignores it (the avatar still bumps into it)
 
         Transform crown = SiteBuilderUtil.Group(palm, "Crown");
         crown.localPosition = new Vector3(0f, height, 0f);
@@ -719,20 +711,24 @@ public static class EXT05_FrontInterlock
         SiteBuilderUtil.Part(b, "Base", PrimitiveType.Sphere, new Vector3(0f, 0.3f, 0f), new Vector3(0.9f, 0.5f, 0.9f), leaves, false);
     }
 
-    // Draws one tile of running-bond brick paving (each row shifted half a brick) with slightly different
-    // brick colours, saves it as a PNG, and returns the imported texture.
+    // Draws one tile of interlocking "dog-bone" pavers, copied from the team's photo of the main road: dark grey-brown pavers with thin dark joints. Each paver is 0.2 m x 0.1 m: wide ends and a slightly narrower waist, so a small dark notch is left at the waist
+    // on both long edges. Rows are staggered by half a paver, and the ends of one row sit over the waists of the next, so the notches line up in a
+    // zig-zag across the road. A fixed random seed gives the same picture every run. Saved as a PNG; every brick surface in the scene uses this one file.
     static Texture2D MakeBrickTexture()
     {
         int w = BrickWidthPx * BricksAcross;
         int h = BrickHeightPx * BrickRows;
         var pixels = new Color32[w * h];
-        var random = new System.Random(5); // fixed seed: the same picture every run, so no churn in git
+        var random = new System.Random(5);
 
-        var mortar = new Color32(72, 62, 58, 255);
+        var mortar = new Color32(44, 40, 36, 255);   // dark joints
         for (int i = 0; i < pixels.Length; i++)
         {
             pixels[i] = mortar;
         }
+
+        const int endWidth = 14;      // the wide ends of the dog-bone, in pixels
+        const int notchDepth = 4;     // how far the waist is cut in from each long edge
 
         for (int row = 0; row < BrickRows; row++)
         {
@@ -741,19 +737,31 @@ public static class EXT05_FrontInterlock
             {
                 int x0 = col * BrickWidthPx - shift;
                 int y0 = row * BrickHeightPx;
-                int variation = random.Next(-14, 15);
-                // Greyish brown, like the real weathered paving (not pink).
+                int variation = random.Next(-12, 13);
+                // About every 5th paver is a darker, wet-stained one (the plaza photo has dark patches); every 12th is a paler, dusty one.
+                int tone = random.Next(0, 5) == 0 ? -28 : (random.Next(0, 12) == 0 ? 14 : 0);
+                // Dark grey-brown, like the main plaza in the team's photo (about 122, 106, 94 on screen). The game's lighting makes surfaces
+                // warmer and bluer than the picture, so the picture is set much darker than the result wanted.
                 var brick = new Color32(
-                    (byte)Mathf.Clamp(104 + variation, 0, 255),
-                    (byte)Mathf.Clamp(92 + variation, 0, 255),
-                    (byte)Mathf.Clamp(86 + variation, 0, 255), 255);
+                    (byte)Mathf.Clamp(92 + variation + tone, 0, 255),
+                    (byte)Mathf.Clamp(76 + variation + tone, 0, 255),
+                    (byte)Mathf.Clamp(56 + variation + tone, 0, 255), 255);
 
-                for (int y = y0 + MortarPx; y < y0 + BrickHeightPx; y++)
+                for (int ly = MortarPx; ly < BrickHeightPx; ly++)
                 {
-                    for (int x = x0 + MortarPx; x < x0 + BrickWidthPx; x++)
+                    for (int lx = MortarPx; lx < BrickWidthPx; lx++)
                     {
-                        int wrappedX = ((x % w) + w) % w; // bricks that stick out one side continue on the other
-                        pixels[y * w + wrappedX] = brick;
+                        bool inWaist = lx >= endWidth && lx < BrickWidthPx - endWidth;
+                        if (inWaist && (ly < MortarPx + notchDepth || ly >= BrickHeightPx - notchDepth))
+                        {
+                            continue;   // the notch at the waist stays joint-coloured
+                        }
+                        int x = x0 + lx;
+                        int y = y0 + ly;
+                        int wrappedX = ((x % w) + w) % w;   // pavers that stick out one side continue on the other
+                        int grain = random.Next(-5, 6);      // fine weathering speckle
+                        pixels[y * w + wrappedX] = new Color32(
+                            (byte)Mathf.Clamp(brick.r + grain, 0, 255), (byte)Mathf.Clamp(brick.g + grain, 0, 255), (byte)Mathf.Clamp(brick.b + grain, 0, 255), 255);
                     }
                 }
             }

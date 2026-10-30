@@ -209,7 +209,7 @@ public static class EXT04_CarShed
         float outerZ = wallZ + CanopyDepth;      // the canopy's outer (low) edge
 
         Transform roofGroup = BuildCanopy(model, m, wallZ, outerZ);
-        BuildBlock(model, m, backZ, wallZ);
+        Transform blockGroup = BuildBlock(model, m, backZ, wallZ);
         BuildFloor(model, m, wallZ, outerZ);
         BuildCars(model, m, wallZ);
 
@@ -223,6 +223,17 @@ public static class EXT04_CarShed
         serialized.FindProperty("footprintCenter").vector2Value = new Vector2(0f, wallZ + CanopyDepth / 2f);
         serialized.FindProperty("margin").floatValue = FadeMargin;
         serialized.ApplyModifiedPropertiesWithoutUndo();
+
+        // 5b. A second fader for the classroom block: it hides the block (walls and roof) while it is between the camera and the Player
+        //     (an avatar under the canopy, with the camera behind it over the block, was hidden by the block). It never counts "the Player
+        //     is inside" (zero footprint), so the block stays visible when you are in front of it.
+        var blockFader = model.gameObject.AddComponent<ShedRoofFader>();
+        var blockSerialized = new SerializedObject(blockFader);
+        blockSerialized.FindProperty("roofGroup").objectReferenceValue = blockGroup;
+        blockSerialized.FindProperty("footprintHalfSize").vector2Value = new Vector2(0.01f, 0.01f);
+        blockSerialized.FindProperty("footprintCenter").vector2Value = new Vector2(-1000f, -1000f);
+        blockSerialized.FindProperty("margin").floatValue = 0f;
+        blockSerialized.ApplyModifiedPropertiesWithoutUndo();
 
         // 6. Save everything. (Count first: in the Editor the scene is reloaded after the save.)
         int objectCount = SiteBuilderUtil.CountObjects(root);
@@ -330,7 +341,7 @@ public static class EXT04_CarShed
     // Block: the single-storey classroom block behind the canopy. One box collider for the whole block,
     // so the avatar cannot walk into it. Windows, shutters and the plinth are on the front (+z) face only.
     // ------------------------------------------------------------------------------------
-    static void BuildBlock(Transform model, Materials m, float backZ, float wallZ)
+    static Transform BuildBlock(Transform model, Materials m, float backZ, float wallZ)
     {
         Transform block = SiteBuilderUtil.Group(model, "Block");
         float midZ = (backZ + wallZ) / 2f;
@@ -380,6 +391,10 @@ public static class EXT04_CarShed
         var collider = block.gameObject.AddComponent<BoxCollider>();
         collider.size = new Vector3(Length, WallHeight + BlockRoofHeight, BlockDepth);
         collider.center = new Vector3(0f, (WallHeight + BlockRoofHeight) / 2f, midZ);
+        // Camera pass-through (layer 2), like the poles and cars: the avatar still cannot walk into the block, but a block between the
+        // avatar and the camera no longer pulls the camera in against the avatar (the block fader below hides it instead).
+        block.gameObject.layer = CameraPassThroughLayer;
+        return block;
     }
 
     // ------------------------------------------------------------------------------------

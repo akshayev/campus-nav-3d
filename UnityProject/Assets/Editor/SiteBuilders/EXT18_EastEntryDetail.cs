@@ -52,9 +52,6 @@ public static class EXT18_EastEntryDetail
     // Security cabin and gate.
     const float CabinX = 78.2f;
     const float CabinZ = 6.8f;
-    const float GateX = 79.6f;
-    const float GateZ1 = -3f;
-    const float GateZ2 = 3f;
 
     [MenuItem("Campus/Build EXT18 East Entry Detail")]
     public static void Build()
@@ -132,7 +129,7 @@ public static class EXT18_EastEntryDetail
         BuildWeathering(root.transform, peel, stain);
         BuildWheelbarrow(root.transform, barrowGreen, tyre);
         BuildCabin(root.transform, white, roofBlue, dark);
-        BuildGate(root.transform, gateGrey);
+        // (The gate is built by EXT19_FrontGate now, with the cladded beam, the closed leaves and the tower behind it.)
         // (The pink two-storey building behind the shed was removed: the team does not want it, and it covered the badminton hall.)
         BuildBackdrop(root.transform, bark, coconutFrond, leaves);
 
@@ -207,19 +204,6 @@ public static class EXT18_EastEntryDetail
         EXT05_FrontInterlock.BuildHipRoof(c, "Roof", new Vector3(0f, 3f, 0f), 5.2f, 4.4f, 1.3f, 0.4f, roof, Prefix);
     }
 
-    // A grey gate frame: two thick square pillars with a capped beam across the top. The pillars have colliders; the gap
-    // between them is open (the sliding gate itself is not modelled).
-    static void BuildGate(Transform parent, Material grey)
-    {
-        Transform g = SiteBuilderUtil.Group(parent, "Gate");
-        const float height = 4.6f;
-        foreach (float z in new[] { GateZ1, GateZ2 })
-        {
-            SiteBuilderUtil.Part(g, "Pillar", PrimitiveType.Cube, new Vector3(GateX, height / 2f, z), new Vector3(1.0f, height, 1.0f), grey, true);
-            SiteBuilderUtil.Part(g, "PillarCap", PrimitiveType.Cube, new Vector3(GateX, height + 0.1f, z), new Vector3(1.25f, 0.2f, 1.25f), grey, false);
-        }
-        SiteBuilderUtil.Part(g, "Beam", PrimitiveType.Cube, new Vector3(GateX, height - 0.4f, (GateZ1 + GateZ2) / 2f), new Vector3(0.9f, 0.8f, GateZ2 - GateZ1 - 0.9f), grey, false);
-    }
 
     // Coconut palms and leafy trees behind the pink building and the shed, to fill the background of the photos.
     static void BuildBackdrop(Transform parent, Material bark, Material coconutFrond, Material leaves)

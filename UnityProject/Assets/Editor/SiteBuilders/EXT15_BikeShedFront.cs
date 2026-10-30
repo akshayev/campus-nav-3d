@@ -33,6 +33,9 @@ public static class EXT15_BikeShedFront
     // Brick road in front of the shed.
     // The bike shed was moved by the team to BikeShedX, BikeShedZ (it was built at 49.7, -43.8; moved +5.4, -3.1 and then
     // -1.5, -0.3). Everything here follows it: the road, plants, wall and bikes below are the old numbers plus those shifts.
+    // Layer 2 is "Ignore Raycast": the follow camera's collision ray ignores it, while the avatar still bumps into it. The wall and the bikes
+    // stand where the camera would otherwise be pulled in right next to the avatar.
+    const int CameraPassThroughLayer = 2;
     const string ShedRootName = "EXT03_BikeShed";
     const float BikeShedX = 59.6f;       // the shed is now 33 m long; its west end is still at x 43.1
     const float BikeShedZ = -47.2f;
@@ -190,7 +193,17 @@ public static class EXT15_BikeShedFront
         }
         BuildSmallTree(plants, treeTrunk, leaves);
 
-        BuildMuralWall(root.transform, wallBase, mural);
+        Transform muralWall = BuildMuralWall(root.transform, wallBase, mural);
+        // The team's ShedRoofFader, used unchanged: it hides the wall while the wall is between the camera and the avatar (the wall is
+        // passed through by the camera, so it would otherwise cover the avatar). It is never hidden for "standing inside" (zero footprint).
+        var wallFader = muralWall.gameObject.AddComponent<ShedRoofFader>();
+        var wallSerialized = new SerializedObject(wallFader);
+        wallSerialized.FindProperty("roofGroup").objectReferenceValue = muralWall;
+        wallSerialized.FindProperty("footprintHalfSize").vector2Value = new Vector2(0.01f, 0.01f);
+        wallSerialized.FindProperty("footprintCenter").vector2Value = new Vector2(-1000f, -1000f);
+        wallSerialized.FindProperty("margin").floatValue = 0f;
+        wallSerialized.FindProperty("boundsHeightPadding").floatValue = 0.2f;
+        wallSerialized.ApplyModifiedPropertiesWithoutUndo();
         BuildBikes(root.transform, bikeBody, bikeRed, tyre);
 
         SiteBuilderUtil.SaveSceneAndAssets(scene);
@@ -209,12 +222,12 @@ public static class EXT15_BikeShedFront
 
     // A low wall along the back of the shed, painted in blocks of colour like the mural in the photo: a pale plinth
     // and a row of coloured panels, each a slightly different width. Has a collider (the bikes stand in front of it).
-    static void BuildMuralWall(Transform parent, Material baseMat, Material[] mural)
+    static Transform BuildMuralWall(Transform parent, Material baseMat, Material[] mural)
     {
         Transform wall = SiteBuilderUtil.Group(parent, "MuralWall");
         float length = WallMaxX - WallMinX;
         SiteBuilderUtil.Part(wall, "Wall", PrimitiveType.Cube, new Vector3((WallMinX + WallMaxX) / 2f, WallHeight / 2f, WallZ),
-            new Vector3(length, WallHeight, 0.3f), baseMat, true);
+            new Vector3(length, WallHeight, 0.3f), baseMat, true).layer = CameraPassThroughLayer;
         var random = new System.Random(15);
         float x = WallMinX;
         int index = 0;
@@ -226,6 +239,7 @@ public static class EXT15_BikeShedFront
             x += w;
             index++;
         }
+        return wall;
     }
 
     // A row of parked motorbikes standing nose-forward (toward +z): a dark body with a red tank, a seat, two wheels,
@@ -250,6 +264,7 @@ public static class EXT15_BikeShedFront
             SiteBuilderUtil.Part(bike, "Seat", PrimitiveType.Cube, new Vector3(0f, 0.9f, -0.35f), new Vector3(0.3f, 0.1f, 0.6f), body, false);
             SiteBuilderUtil.Part(bike, "Handlebar", PrimitiveType.Cube, new Vector3(0f, 1.1f, 0.65f), new Vector3(0.7f, 0.05f, 0.05f), body, false);
 
+            bike.gameObject.layer = CameraPassThroughLayer;
             var collider = bike.gameObject.AddComponent<BoxCollider>();
             collider.size = new Vector3(0.7f, 1.1f, 1.9f);
             collider.center = new Vector3(0f, 0.55f, 0f);

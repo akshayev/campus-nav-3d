@@ -33,7 +33,7 @@ public static class EXT17_EntryLawn
     const string Prefix = "EXT17";
 
     // Mural wall.
-    const float WallX = 79.6f;
+    const float WallX = 76.4f;           // the same x as the gate's side wall (EXT19), so the two make one straight wall
     const float WallMinZ = -62f;
     const float WallMaxZ = -34f;
     const float WallHeight = 2.3f;
@@ -204,6 +204,7 @@ public static class EXT17_EntryLawn
             float x = TuftMinX + (float)random.NextDouble() * (TuftMaxX - TuftMinX);
             float z = TuftMinZ + (float)random.NextDouble() * (TuftMaxZ - TuftMinZ);
             if (x > 60.2f && x < 64.2f) continue;                            // the straight brick way (x 60.9 .. 63.5)
+            if (z > -17.2f) continue;                                        // the compound wall (EXT19) is at z -16.5
             if (z < -30.5f) continue;                                        // the two curved ways start around z -31 to -33
             if (x > 53.5f && x < 57f && z > -25f && z < -20f) continue;   // the tower
             if (x > 56.5f && x < 60.2f && z > -28f && z < -14.5f) continue; // the palm row
